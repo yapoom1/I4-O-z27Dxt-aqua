@@ -140,14 +140,6 @@ export default function Header() {
 
         {/* Header Actions Buttons Right */}
         <div className={styles.actionsContainer}>
-          {/* Global Search Icon Button */}
-          <button 
-            className={`${styles.iconButton} ${isSearchOpen ? styles.activeButton : ""}`} 
-            aria-label="Search Catalog"
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-          >
-            <Search size={20} strokeWidth={1.8} className={styles.icon} />
-          </button>
 
           {/* Cart Icon Button */}
           <button 

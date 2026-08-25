@@ -24,6 +24,18 @@
   }
 }
 
+.heroWrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .heroWrapper {
+    margin-top: 36px;
+  }
+}
+
 .heroContainer {
   position: relative;
   width: 100%;
@@ -112,10 +124,20 @@
 /* Rotating Circle Badge Overlay */
 .rotatingBadgeContainer {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: -32px;
+  right: -8px;
   z-index: 10;
   pointer-events: none; /* Let clicks pass through to banner */
+  transform: scale(0.55);
+  transform-origin: top right;
+}
+
+@media (min-width: 768px) {
+  .rotatingBadgeContainer {
+    top: -54px;
+    right: -20px;
+    transform: scale(0.85);
+  }
 }
 
 .rotatingBadge {

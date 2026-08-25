@@ -21,16 +21,18 @@ export default async function Home() {
 
         {/* Top Hero Section */}
         <div className={styles.topSection}>
-          <div className={styles.heroContainer}>
-            <Image 
-              src="/images/new_hero.png" 
-              alt="Hero Image" 
-              width={1200} 
-              height={600} 
-              sizes="(max-width: 1024px) 100vw, 1024px"
-              className={styles.heroImage}
-              priority
-            />
+          <div className={styles.heroWrapper}>
+            <div className={styles.heroContainer}>
+              <Image 
+                src="/images/new_hero.png" 
+                alt="Hero Image" 
+                width={1200} 
+                height={600} 
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                className={styles.heroImage}
+                priority
+              />
+            </div>
 
             {/* Rotating Badge Overlay Top Right */}
             <div className={styles.rotatingBadgeContainer}>
