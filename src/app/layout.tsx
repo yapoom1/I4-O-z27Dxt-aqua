@@ -6,6 +6,7 @@ import CartSidebar from "@/components/CartSidebar";
 import LoginModal from "@/components/LoginModal";
 import Footer from "@/components/Footer";
 import ThemeProvider from "@/components/ThemeProvider";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
 const fellix = localFont({
@@ -71,6 +72,7 @@ export default function RootLayout({
           <WishlistProvider>
             <ThemeProvider />
             {children}
+            <WhatsAppButton />
             <CartSidebar />
             <LoginModal />
             <Footer />
