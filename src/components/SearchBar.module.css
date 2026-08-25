@@ -1,0 +1,294 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 24px 16px 24px;
+  background-color: var(--background);
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 8px 32px 16px 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 8px 0 16px 0;
+  }
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 15px 44px 15px 50px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--card-bg);
+  border-radius: 28px;
+  box-shadow: 0 4px 14px rgba(var(--black-rgb), 0.03);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(var(--black-rgb), 0.03);
+}
+
+.searchInput:focus {
+  background-color: var(--card-bg);
+  border-color: rgba(var(--accent-rgb), 0.3);
+  box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.1);
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.65;
+}
+
+.clearSearchBtn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--input-bg);
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearSearchBtn:hover {
+  color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.filterBtnWrapper {
+  position: relative;
+}
+
+.filterButton {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 14px rgba(var(--black-rgb), 0.03);
+  border: 1px solid rgba(var(--black-rgb), 0.03);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.filterButton:hover {
+  transform: scale(1.04);
+}
+
+.filterButton:active {
+  transform: scale(0.96);
+  background-color: var(--input-bg);
+}
+
+.filterOpen {
+  background-color: var(--input-bg);
+  border-color: rgba(var(--accent-rgb), 0.4);
+}
+
+.filterActive {
+  border-color: var(--text-primary);
+  background-color: var(--card-bg);
+}
+
+.filterIcon {
+  color: var(--text-primary);
+}
+
+.activeDot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0070f3;
+  box-shadow: 0 0 0 2px var(--card-bg);
+}
+
+/* Dropdown Menu */
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 260px;
+  background-color: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 8px;
+  z-index: 100;
+  animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px 6px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  margin-bottom: 4px;
+}
+
+.dropdownTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.resetBtn {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0070f3;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.resetBtn:hover {
+  text-decoration: underline;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  text-align: left;
+}
+
+.optionItem:hover {
+  background-color: var(--input-bg);
+}
+
+.optionSelected {
+  background-color: rgba(0, 112, 243, 0.08);
+  color: #0070f3;
+  font-weight: 600;
+}
+
+.optionLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.optionIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.optionSelected .optionIcon {
+  color: #0070f3;
+}
+
+.checkIcon {
+  color: #0070f3;
+  flex-shrink: 0;
+}
+
+/* Active Chips */
+.activeChipsContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 12px;
+  border-radius: 16px;
+  background-color: rgba(0, 112, 243, 0.08);
+  border: 1px solid rgba(0, 112, 243, 0.2);
+  color: #0070f3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chipRemoveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #0070f3;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.chipRemoveBtn:hover {
+  opacity: 1;
+}

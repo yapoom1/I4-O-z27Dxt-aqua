@@ -1,0 +1,1202 @@
+import { Product, PRODUCTS } from "@/data/products";
+const API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL || "http://acme.localhost:8000/graphql/";
+const DEFAULT_CHANNEL = process.env.NEXT_PUBLIC_DEFAULT_CHANNEL || "channel-usd";
+
+const LOCAL_FALLBACK_IMAGES = [
+  "/images/product-blue.png",
+  "/images/product-brown.png",
+  "/images/product-green.png",
+  "/images/product-white.png",
+];
+
+const BEAUTIFUL_COLORS = [
+  "#e5a63c", // honey amber
+  "#5d3c26", // deep brown
+  "#4a2f1b", // dark wood
+  "#c5cdd8", // ribbon fish silver
+  "#3d2719", // masi dark
+  "#9d9284", // slate grey
+  "#7d8c99", // ocean blue
+  "#99b350", // gooseberry green
+];
+
+// Simple helper to hash a string to a positive integer
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+// Parses Saleor's Editor.js JSON description to plain text
+function parseSaleorDescription(descriptionJson: string | null | undefined): string {
+  if (!descriptionJson) return "";
+  try {
+    const data = JSON.parse(descriptionJson);
+    if (data && data.blocks && Array.isArray(data.blocks)) {
+      return data.blocks
+        .map((block: any) => block.data?.text || "")
+        .join(" ")
+        .replace(/<[^>]*>/g, ""); // Strip any HTML tags
+    }
+  } catch (e) {
+    // Return as-is if it's not a JSON string
+  }
+  return descriptionJson;
+}
+
+export interface SaleorProductNode {
+  id: string;
+  name: string;
+  description?: string;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  pricing?: {
+    priceRange?: {
+      start?: {
+        gross?: {
+          amount: number;
+          currency: string;
+        } | null;
+      } | null;
+    } | null;
+  } | null;
+  thumbnail?: {
+    url: string;
+    alt?: string | null;
+  } | null;
+  media?: Array<{
+    url: string;
+    alt?: string | null;
+  }> | null;
+  variants?: Array<{
+    id: string;
+    name: string;
+    pricing?: {
+      price?: {
+        gross?: {
+          amount: number;
+          currency: string;
+        } | null;
+      } | null;
+    } | null;
+    media?: Array<{
+      url: string;
+      alt?: string | null;
+    }> | null;
+    attributes: Array<{
+      attribute: {
+        name: string;
+      };
+      values: Array<{
+        name: string;
+      }>;
+    }>;
+  }> | null;
+}
+
+// Maps a Saleor GraphQL product node to the frontend Product UI interface
+export function mapSaleorProductToProduct(node: SaleorProductNode): Product {
+  const id = node.id;
+  const hash = hashString(id);
+
+  // Parse Description
+  const description = parseSaleorDescription(node.description) || `Premium quality ${node.name} sourced from our select vendors.`;
+
+  // Parse Pricing
+  const priceAmount = node.pricing?.priceRange?.start?.gross?.amount ?? 0;
+  const currency = node.pricing?.priceRange?.start?.gross?.currency ?? "USD";
+  const currencySymbol = currency === "USD" ? "$" : `${currency} `;
+  const price = `${currencySymbol}${priceAmount.toFixed(0)}`;
+  const numericPrice = priceAmount;
+
+  // Resolve Image: check thumbnail first, then media array, fallback to empty string
+  const thumbnailImage = node.thumbnail?.url;
+  const mediaImage = node.media && node.media.length > 0 ? node.media[0].url : undefined;
+  const image = thumbnailImage || mediaImage || "";
+
+  // Collect ALL images from product node and variants
+  const images: string[] = [];
+  if (thumbnailImage) images.push(thumbnailImage);
+  if (node.media) {
+    node.media.forEach(m => {
+      if (m.url && !images.includes(m.url)) {
+        images.push(m.url);
+      }
+    });
+  }
+  if (node.variants) {
+    node.variants.forEach(v => {
+      if (v.media) {
+        v.media.forEach(m => {
+          if (m.url && !images.includes(m.url)) {
+            images.push(m.url);
+          }
+        });
+      }
+    });
+  }
+
+  // Resolve Subtitle
+  const subtitle = node.category?.name 
+    ? `Premium ${node.category.name.toLowerCase()}` 
+    : "High Quality Product";
+
+  // Deterministic Rating and Reviews
+  const rating = parseFloat((4.5 + (hash % 5) * 0.1).toFixed(1));
+  const reviewsCount = 20 + (hash % 180);
+
+  // Resolve Colors (from variant attributes or fallback)
+  const colors: string[] = [];
+  if (node.variants && node.variants.length > 0) {
+    node.variants.forEach(variant => {
+      variant.attributes.forEach(attr => {
+        if (attr.attribute.name.toLowerCase().includes("color")) {
+          attr.values.forEach(val => {
+            if (val.name && !colors.includes(val.name)) {
+              colors.push(val.name);
+            }
+          });
+        }
+      });
+    });
+  }
+  if (colors.length === 0) {
+    // Pick 1 or 2 deterministic beautiful colors
+    const colorIndex1 = hash % BEAUTIFUL_COLORS.length;
+    const colorIndex2 = (hash + 3) % BEAUTIFUL_COLORS.length;
+    colors.push(BEAUTIFUL_COLORS[colorIndex1]);
+    if (hash % 2 === 0 && colorIndex1 !== colorIndex2) {
+      colors.push(BEAUTIFUL_COLORS[colorIndex2]);
+    }
+  }
+
+  // Resolve Sizes (from variant attributes/names or fallback)
+  const sizes: string[] = [];
+  if (node.variants && node.variants.length > 0) {
+    node.variants.forEach(variant => {
+      // Look for Size attributes
+      let foundSizeAttr = false;
+      variant.attributes.forEach(attr => {
+        const name = attr.attribute.name.toLowerCase();
+        if (name.includes("size") || name.includes("weight") || name.includes("dimension") || name.includes("medium")) {
+          attr.values.forEach(val => {
+            if (val.name && !sizes.includes(val.name)) {
+              sizes.push(val.name);
+            }
+          });
+          foundSizeAttr = true;
+        }
+      });
+      // Fallback to variant name if no size attribute was explicitly tagged
+      if (!foundSizeAttr && variant.name && variant.name !== node.name && !sizes.includes(variant.name)) {
+        sizes.push(variant.name);
+      }
+    });
+  }
+  if (sizes.length === 0) {
+    // Fallback to weight options based on category or default
+    const isTraditionalOrHoney = node.category?.slug.includes("honey") || node.category?.slug.includes("traditional");
+    sizes.push(...(isTraditionalOrHoney ? ["250g", "500g", "1kg"] : ["Standard"]));
+  }
+
+  // Map variants to UI list of variant objects
+  const variants = (node.variants || []).map(v => {
+    const vPriceAmount = v.pricing?.price?.gross?.amount ?? priceAmount;
+    const vCurrency = v.pricing?.price?.gross?.currency ?? currency;
+    const vCurrencySymbol = vCurrency === "USD" ? "$" : `${vCurrency} `;
+    
+    // Check variant specific media, fallback to parent image
+    const vMediaUrl = v.media && v.media.length > 0 ? v.media[0].url : undefined;
+    const vImage = vMediaUrl || image;
+
+    // Collect sizes and colors specific to this variant
+    const vSizes: string[] = [];
+    const vColors: string[] = [];
+    v.attributes.forEach(attr => {
+      const attrName = attr.attribute.name.toLowerCase();
+      if (attrName.includes("size") || attrName.includes("weight") || attrName.includes("dimension") || attrName.includes("medium")) {
+        attr.values.forEach(val => {
+          if (val.name && !vSizes.includes(val.name)) vSizes.push(val.name);
+        });
+      }
+      if (attrName.includes("color")) {
+        attr.values.forEach(val => {
+          if (val.name && !vColors.includes(val.name)) vColors.push(val.name);
+        });
+      }
+    });
+
+    if (vSizes.length === 0 && v.name !== node.name) {
+      vSizes.push(v.name);
+    }
+
+    return {
+      id: v.id,
+      name: v.name,
+      price: `${vCurrencySymbol}${vPriceAmount.toFixed(0)}`,
+      numericPrice: vPriceAmount,
+      sizes: vSizes,
+      colors: vColors,
+      image: vImage,
+    };
+  });
+
+  // Limited state
+  const limited = (hash % 4 === 0) || (numericPrice > 80);
+
+  // Category slug representation
+  const category = node.category?.slug || "traditional";
+
+  return {
+    id,
+    name: node.name,
+    subtitle,
+    description,
+    price,
+    numericPrice,
+    image,
+    rating,
+    reviewsCount,
+    colors,
+    sizes,
+    limited,
+    category,
+    images,
+    variants,
+    isLiked: hash % 7 === 0, // Randomly like a few products for visual flavor
+  };
+}
+
+// Executes a GraphQL query against the Saleor backend
+export async function fetchSaleorGraphQL(query: string, variables: Record<string, any> = {}, token?: string) {
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers["Authorization"] = `JWT ${token}`;
+    }
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+      next: token ? { revalidate: 0 } : { revalidate: 60 },
+    });
+
+    const json = await response.json();
+    if (json.errors) {
+      console.error("Saleor GraphQL Errors:", json.errors);
+      throw new Error(json.errors[0]?.message || "GraphQL Error");
+    }
+    return json.data;
+  } catch (error) {
+    console.error("Failed to fetch from Saleor:", error);
+    return null;
+  }
+}
+
+// Fetches list of products from mock data
+export async function getProducts(first = 24): Promise<Product[]> {
+  return PRODUCTS.slice(0, first);
+}
+
+// Fetches a single product details by ID
+export async function getProductById(id: string): Promise<Product | null> {
+  const decodedId = decodeURIComponent(id);
+  const found = PRODUCTS.find((p) => p.id === decodedId || p.id === id);
+  if (found) {
+    return found;
+  }
+  return null;
+}
+
+const EMOJI_MAP: Record<string, string> = {
+  accessories: "👜",
+  audiobooks: "🎧",
+  apparel: "👕",
+  sneakers: "👟",
+  sweatshirts: "🧥",
+  headware: "🧢",
+  beanies: "🧦",
+  scarfs: "🧣",
+  sunglasses: "🕶️",
+  shirts: "👔",
+  "t-shirts": "👕",
+  "polo-shirts": "👕",
+  homewares: "🏠",
+  groceries: "🍎",
+  juices: "🥤",
+  "gift-cards": "🎁",
+  "default-category": "📦",
+};
+
+export interface SaleorCategory {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+}
+
+export async function getCategories(first = 24): Promise<SaleorCategory[]> {
+  return [
+    {
+      id: "cat-1",
+      name: "Domestic RO Units",
+      slug: "domestic-ro",
+      emoji: "💧"
+    }
+  ];
+}
+
+export async function requestOtp(phone: string): Promise<{ success: boolean; error?: string }> {
+  const mutation = `
+    mutation RequestOtp($phone: String!) {
+      otpRequest(phone: $phone) {
+        success
+        accountErrors {
+          field
+          message
+          code
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { phone });
+  if (!data || !data.otpRequest) {
+    return { success: false, error: "Failed to request OTP" };
+  }
+
+  const errors = data.otpRequest.accountErrors;
+  if (errors && errors.length > 0) {
+    return { success: false, error: errors[0].message };
+  }
+
+  return { success: data.otpRequest.success };
+}
+
+export async function confirmOtp(phone: string, otp: string): Promise<{ success: boolean; user?: any; token?: string; refreshToken?: string; error?: string }> {
+  const mutation = `
+    mutation ConfirmOtp($phone: String!, $otp: String!) {
+      otpConfirm(phone: $phone, otp: $otp) {
+        token
+        refreshToken
+        csrfToken
+        user {
+          id
+          email
+        }
+        accountErrors {
+          field
+          message
+          code
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { phone, otp });
+  if (!data || !data.otpConfirm) {
+    return { success: false, error: "Failed to verify OTP" };
+  }
+
+  const errors = data.otpConfirm.accountErrors;
+  if (errors && errors.length > 0) {
+    return { success: false, error: errors[0].message };
+  }
+
+  return {
+    success: true,
+    user: data.otpConfirm.user,
+    token: data.otpConfirm.token,
+    refreshToken: data.otpConfirm.refreshToken,
+  };
+}
+
+export async function getUserProfile(token: string) {
+  const query = `
+    query GetUserProfile {
+      me {
+        id
+        email
+        firstName
+        lastName
+        avatar {
+          url
+        }
+        metadata {
+          key
+          value
+        }
+        orders(first: 100) {
+          totalCount
+        }
+        addresses {
+          id
+          firstName
+          lastName
+          streetAddress1
+          streetAddress2
+          city
+          postalCode
+          phone
+          isDefaultShippingAddress
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(query, {}, token);
+  if (!data || !data.me) {
+    return null;
+  }
+
+  const me = data.me;
+  const name = [me.firstName, me.lastName].filter(Boolean).join(" ") || "Saleor User";
+  
+  // Extract phone number from metadata
+  const phoneMeta = me.metadata?.find((m: any) => m.key === "phone" || m.key === "mobile_number");
+  const phone = phoneMeta ? phoneMeta.value : (me.email.includes("@otp.localhost") ? me.email.split("@")[0] : "");
+
+  return {
+    id: me.id,
+    name,
+    email: me.email,
+    phone,
+    avatar: me.avatar?.url || "/images/profile.png",
+    ordersCount: me.orders?.totalCount || 0,
+    addresses: me.addresses || []
+  };
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<{ success: boolean; token?: string; error?: string }> {
+  const mutation = `
+    mutation TokenRefresh($refreshToken: String!) {
+      tokenRefresh(refreshToken: $refreshToken) {
+        token
+        accountErrors {
+          field
+          message
+          code
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { refreshToken });
+  if (!data || !data.tokenRefresh) {
+    return { success: false, error: "Failed to refresh token" };
+  }
+
+  const errors = data.tokenRefresh.accountErrors;
+  if (errors && errors.length > 0) {
+    return { success: false, error: errors[0].message };
+  }
+
+  return {
+    success: true,
+    token: data.tokenRefresh.token
+  };
+}
+
+export async function createAddress(token: string, addressData: any) {
+  const mutation = `
+    mutation AccountAddressCreate($input: AddressInput!, $type: AddressTypeEnum) {
+      accountAddressCreate(input: $input, type: $type) {
+        address {
+          id
+          firstName
+          lastName
+          companyName
+          streetAddress1
+          streetAddress2
+          city
+          cityArea
+          postalCode
+          phone
+          countryArea
+          isDefaultShippingAddress
+        }
+        accountErrors {
+          field
+          message
+          code
+        }
+      }
+    }
+  `;
+
+  let countryCode = (addressData.country || "IN").trim().toUpperCase();
+  if (countryCode === "UK" || countryCode === "UNITED KINGDOM" || countryCode === "ENGLAND") {
+    countryCode = "GB";
+  } else if (countryCode === "USA" || countryCode === "UNITED STATES") {
+    countryCode = "US";
+  } else {
+    countryCode = countryCode.substring(0, 2) || "IN";
+  }
+
+  // Attempt to parse postal code, city, and state (countryArea) from input fields
+  let postalCode = addressData.postalCode;
+  let city = addressData.city;
+  let countryArea = addressData.state;
+
+  // Fallback to legacy parsing if fields are not present
+  if (!city || !postalCode) {
+    const cityStateStr = addressData.cityState || "";
+    if (countryCode === "GB") {
+      const ukPostcodeRegex = /([A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2})/i;
+      const match = cityStateStr.match(ukPostcodeRegex);
+      postalCode = match ? match[1] : "SW1A 1AA";
+    } else if (countryCode === "US") {
+      const usZipRegex = /(\d{5}(-\d{4})?)/;
+      const match = cityStateStr.match(usZipRegex);
+      postalCode = match ? match[1] : "90210";
+    } else {
+      const inPostcodeRegex = /(\d{6})/;
+      const match = cityStateStr.match(inPostcodeRegex);
+      postalCode = match ? match[1] : "110001";
+    }
+
+    let remainingStr = cityStateStr;
+    if (postalCode && postalCode !== "110001" && postalCode !== "SW1A 1AA" && postalCode !== "90210") {
+      remainingStr = cityStateStr.replace(postalCode, "");
+    }
+    remainingStr = remainingStr.replace(/^[\s,]+|[\s,]+$/g, "").trim();
+
+    const partsList = remainingStr.split(",").map((p: string) => p.trim()).filter(Boolean);
+    city = partsList[0] || "City";
+    countryArea = partsList[1] || "";
+  }
+
+  if (!countryArea) {
+    if (countryCode === "IN") {
+      countryArea = "Karnataka";
+    } else if (countryCode === "US") {
+      countryArea = "CA";
+    } else {
+      countryArea = city;
+    }
+  }
+
+  // Clean phone number with prefix
+  let phone = (addressData.phone || "").trim();
+  if (phone && !phone.startsWith("+")) {
+    const digits = phone.replace(/\D/g, "");
+    if (countryCode === "GB") {
+      phone = `+44${digits.replace(/^44/, "").replace(/^0/, "")}`;
+    } else if (countryCode === "US") {
+      phone = `+1${digits.replace(/^1/, "")}`;
+    } else {
+      phone = `+91${digits.replace(/^91/, "")}`;
+    }
+  }
+  if (!phone) {
+    phone = countryCode === "GB" ? "+442079460958" : (countryCode === "US" ? "+12025550143" : "+919999999999");
+  }
+
+  const parts = addressData.name?.trim().split(" ") || ["Saleor", "User"];
+  const firstName = parts[0] || "Saleor";
+  const lastName = parts.slice(1).join(" ").trim() || "User";
+
+  const variables = {
+    type: "SHIPPING",
+    input: {
+      firstName,
+      lastName,
+      companyName: addressData.companyName || "",
+      streetAddress1: addressData.street || "123 Main St",
+      streetAddress2: addressData.streetAddress2 || "",
+      city: city || "City",
+      cityArea: addressData.cityArea || "",
+      postalCode: postalCode || "110001",
+      phone,
+      country: countryCode,
+      countryArea
+    }
+  };
+
+  const data = await fetchSaleorGraphQL(mutation, variables, token);
+  if (!data || !data.accountAddressCreate) {
+    return { success: false, error: "Failed to create address" };
+  }
+
+  const errors = data.accountAddressCreate.accountErrors;
+  if (errors && errors.length > 0) {
+    const fieldMsg = errors[0].field ? `Field '${errors[0].field}': ` : "";
+    return { success: false, error: `${fieldMsg}${errors[0].message}` };
+  }
+
+  return {
+    success: true,
+    address: data.accountAddressCreate.address
+  };
+}
+
+export async function deleteAddressMutation(token: string, id: string) {
+  const mutation = `
+    mutation AccountAddressDelete($id: ID!) {
+      accountAddressDelete(id: $id) {
+        address {
+          id
+        }
+        accountErrors {
+          field
+          message
+          code
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { id }, token);
+  if (!data || !data.accountAddressDelete) {
+    return { success: false, error: "Failed to delete address" };
+  }
+
+  const errors = data.accountAddressDelete.accountErrors;
+  if (errors && errors.length > 0) {
+    return { success: false, error: errors[0].message };
+  }
+
+  return { success: true };
+}
+
+export async function setDefaultAddressMutation(token: string, id: string) {
+  const mutation = `
+    mutation AccountSetDefaultAddress($id: ID!, $type: AddressTypeEnum!) {
+      accountSetDefaultAddress(id: $id, type: $type) {
+        user {
+          id
+        }
+        accountErrors {
+          field
+          message
+          code
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { id, type: "SHIPPING" }, token);
+  if (!data || !data.accountSetDefaultAddress) {
+    return { success: false, error: "Failed to set default address" };
+  }
+
+  const errors = data.accountSetDefaultAddress.accountErrors;
+  if (errors && errors.length > 0) {
+    return { success: false, error: errors[0].message };
+  }
+
+  return { success: true };
+}
+
+export function isTokenExpired(token: string): boolean {
+  try {
+    const payloadBase64 = token.split(".")[1];
+    if (!payloadBase64) return true;
+    const payloadJson = Buffer.from(payloadBase64, "base64").toString("ascii");
+    const payload = JSON.parse(payloadJson);
+    const exp = payload.exp;
+    if (!exp) return true;
+    const now = Math.floor(Date.now() / 1000) + 10;
+    return now >= exp;
+  } catch {
+    return true;
+  }
+}
+
+export async function getValidToken(cookieStore: any): Promise<string | null> {
+  let token = cookieStore.get("saleor_auth_token")?.value;
+  const refreshToken = cookieStore.get("saleor_refresh_token")?.value;
+
+  if (token && !isTokenExpired(token)) {
+    return token;
+  }
+
+  if (refreshToken) {
+    console.log("Access token missing or expired, refreshing via getValidToken helper...");
+    const refreshResult = await refreshAccessToken(refreshToken);
+    if (refreshResult.success && refreshResult.token) {
+      token = refreshResult.token;
+      cookieStore.set("saleor_auth_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
+      return token;
+    }
+  }
+
+  return null;
+}
+
+const CHECKOUT_FIELDS = `
+  id
+  token
+  discount {
+    amount
+  }
+  discountName
+  voucherCode
+  shippingPrice {
+    gross {
+      amount
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+    }
+  }
+  totalPrice {
+    gross {
+      amount
+    }
+  }
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      media {
+        url
+      }
+      pricing {
+        price {
+          gross {
+            amount
+            currency
+          }
+        }
+      }
+      product {
+        id
+        name
+        thumbnail {
+          url
+        }
+      }
+    }
+  }
+`;
+
+export async function getUserCheckout(token: string): Promise<any | null> {
+  const query = `
+    query GetUserCheckout {
+      me {
+        checkouts(first: 1) {
+          edges {
+            node {
+              ${CHECKOUT_FIELDS}
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(query, {}, token);
+  if (!data || !data.me || !data.me.checkouts || !data.me.checkouts.edges || data.me.checkouts.edges.length === 0) {
+    return null;
+  }
+
+  return data.me.checkouts.edges[0].node;
+}
+
+export async function createCheckout(token: string | undefined, lines: any[]): Promise<any | null> {
+  const mutation = `
+    mutation CreateCheckout($input: CheckoutCreateInput!) {
+      checkoutCreate(input: $input) {
+        checkout {
+          ${CHECKOUT_FIELDS}
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const input = {
+    channel: "channel-usd",
+    lines: lines.map((l) => ({
+      quantity: l.quantity,
+      variantId: l.variantId
+    }))
+  };
+
+  const data = await fetchSaleorGraphQL(mutation, { input }, token);
+  if (!data || !data.checkoutCreate || !data.checkoutCreate.checkout) {
+    return null;
+  }
+
+  return data.checkoutCreate.checkout;
+}
+
+export async function addCheckoutLines(token: string, checkoutId: string, lines: any[]): Promise<any | null> {
+  const mutation = `
+    mutation AddCheckoutLines($checkoutId: ID!, $lines: [CheckoutLineInput!]!) {
+      checkoutLinesAdd(checkoutId: $checkoutId, lines: $lines) {
+        checkout {
+          ${CHECKOUT_FIELDS}
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const linesInput = lines.map((l) => ({
+    quantity: l.quantity,
+    variantId: l.variantId
+  }));
+
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId, lines: linesInput }, token);
+  if (!data || !data.checkoutLinesAdd || !data.checkoutLinesAdd.checkout) {
+    return null;
+  }
+
+  return data.checkoutLinesAdd.checkout;
+}
+
+export async function updateCheckoutLines(token: string, checkoutId: string, lines: any[]): Promise<any | null> {
+  const mutation = `
+    mutation UpdateCheckoutLines($checkoutId: ID!, $lines: [CheckoutLineUpdateInput!]!) {
+      checkoutLinesUpdate(checkoutId: $checkoutId, lines: $lines) {
+        checkout {
+          ${CHECKOUT_FIELDS}
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const linesInput = lines.map((l) => ({
+    quantity: l.quantity,
+    variantId: l.lineId ? undefined : l.variantId,
+    lineId: l.lineId || undefined
+  }));
+
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId, lines: linesInput }, token);
+  if (!data || !data.checkoutLinesUpdate || !data.checkoutLinesUpdate.checkout) {
+    return null;
+  }
+
+  return data.checkoutLinesUpdate.checkout;
+}
+
+export async function deleteCheckoutLines(token: string, checkoutId: string, lineIds: string[]): Promise<any | null> {
+  const mutation = `
+    mutation DeleteCheckoutLines($id: ID!, $linesIds: [ID!]!) {
+      checkoutLinesDelete(id: $id, linesIds: $linesIds) {
+        checkout {
+          ${CHECKOUT_FIELDS}
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { id: checkoutId, linesIds: lineIds }, token);
+  if (!data || !data.checkoutLinesDelete || !data.checkoutLinesDelete.checkout) {
+    return null;
+  }
+
+  return data.checkoutLinesDelete.checkout;
+}
+
+export async function addCheckoutPromoCode(token: string, checkoutId: string, promoCode: string): Promise<any | null> {
+  const mutation = `
+    mutation AddCheckoutPromoCode($checkoutId: ID!, $promoCode: String!) {
+      checkoutAddPromoCode(checkoutId: $checkoutId, promoCode: $promoCode) {
+        checkout {
+          ${CHECKOUT_FIELDS}
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId, promoCode }, token);
+  if (!data || !data.checkoutAddPromoCode || !data.checkoutAddPromoCode.checkout) {
+    const errors = data?.checkoutAddPromoCode?.errors;
+    if (errors && errors.length > 0) {
+      throw new Error(errors[0].message);
+    }
+    return null;
+  }
+
+  return data.checkoutAddPromoCode.checkout;
+}
+
+export async function removeCheckoutPromoCode(token: string, checkoutId: string, promoCode: string): Promise<any | null> {
+  const mutation = `
+    mutation RemoveCheckoutPromoCode($checkoutId: ID!, $promoCode: String!) {
+      checkoutRemovePromoCode(checkoutId: $checkoutId, promoCode: $promoCode) {
+        checkout {
+          ${CHECKOUT_FIELDS}
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId, promoCode }, token);
+  if (!data || !data.checkoutRemovePromoCode || !data.checkoutRemovePromoCode.checkout) {
+    return null;
+  }
+
+  return data.checkoutRemovePromoCode.checkout;
+}
+
+export async function updateCheckoutEmail(token: string | null | undefined, checkoutId: string, email: string): Promise<any> {
+  const mutation = `
+    mutation UpdateCheckoutEmail($checkoutId: ID!, $email: String!) {
+      checkoutEmailUpdate(checkoutId: $checkoutId, email: $email) {
+        checkout {
+          id
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId, email }, token || undefined);
+  return data?.checkoutEmailUpdate?.checkout || null;
+}
+
+export async function updateCheckoutAddress(
+  token: string | null | undefined,
+  checkoutId: string,
+  address: {
+    firstName: string;
+    lastName: string;
+    streetAddress1: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    phone: string;
+  },
+  isShipping = true
+): Promise<any> {
+  const addressInput = {
+    firstName: address.firstName,
+    lastName: address.lastName,
+    streetAddress1: address.streetAddress1,
+    city: address.city,
+    postalCode: address.postalCode || "00000",
+    country: address.country,
+    phone: address.phone
+  };
+
+  const mutation = isShipping
+    ? `mutation UpdateCheckoutShipping($checkoutId: ID!, $address: AddressInput!) {
+         checkoutShippingAddressUpdate(checkoutId: $checkoutId, shippingAddress: $address) {
+           checkout {
+             id
+           }
+           errors {
+             field
+             message
+           }
+         }
+       }`
+    : `mutation UpdateCheckoutBilling($checkoutId: ID!, $address: AddressInput!) {
+         checkoutBillingAddressUpdate(checkoutId: $checkoutId, billingAddress: $address) {
+           checkout {
+             id
+           }
+           errors {
+             field
+             message
+           }
+         }
+       }`;
+
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId, address: addressInput }, token || undefined);
+  return isShipping 
+    ? data?.checkoutShippingAddressUpdate?.checkout 
+    : data?.checkoutBillingAddressUpdate?.checkout;
+}
+
+export async function getCheckoutDeliveryMethods(token: string | null | undefined, checkoutId: string): Promise<any[]> {
+  const query = `
+    query GetCheckoutShipping($id: ID!) {
+      checkout(id: $id) {
+        shippingMethods {
+          id
+          name
+          price {
+            amount
+          }
+        }
+      }
+    }
+  `;
+  const data = await fetchSaleorGraphQL(query, { id: checkoutId }, token || undefined);
+  return data?.checkout?.shippingMethods || [];
+}
+
+export async function updateCheckoutDeliveryMethod(token: string | null | undefined, checkoutId: string, deliveryMethodId: string): Promise<any> {
+  const mutation = `
+    mutation UpdateCheckoutDeliveryMethod($checkoutId: ID!, $deliveryMethodId: ID!) {
+      checkoutDeliveryMethodUpdate(checkoutId: $checkoutId, deliveryMethodId: $deliveryMethodId) {
+        checkout {
+          id
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId, deliveryMethodId }, token || undefined);
+  return data?.checkoutDeliveryMethodUpdate?.checkout || null;
+}
+
+export async function completeCheckout(token: string | null | undefined, checkoutId: string): Promise<any> {
+  const mutation = `
+    mutation CompleteCheckout($checkoutId: ID!) {
+      checkoutComplete(checkoutId: $checkoutId) {
+        order {
+          id
+          number
+          total {
+            gross {
+              amount
+              currency
+            }
+          }
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  `;
+  const data = await fetchSaleorGraphQL(mutation, { checkoutId }, token || undefined);
+  return data?.checkoutComplete?.order || null;
+}
+
+export async function getUserOrders(token: string | null | undefined): Promise<any[]> {
+  if (!token) return [];
+  const query = `
+    query GetUserOrders {
+      me {
+        orders(first: 20) {
+          edges {
+            node {
+              id
+              number
+              created
+              status
+              total {
+                gross {
+                  amount
+                  currency
+                }
+              }
+              lines {
+                id
+                productName
+                variantName
+                quantity
+                thumbnail {
+                  url
+                  alt
+                }
+                unitPrice {
+                  gross {
+                    amount
+                    currency
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const data = await fetchSaleorGraphQL(query, {}, token);
+  const edges = data?.me?.orders?.edges || [];
+  return edges.map((edge: any) => edge.node);
+}
+
+export async function getOrderById(token: string | null | undefined, orderId: string): Promise<any | null> {
+  const query = `
+    query GetOrder($id: ID!) {
+      order(id: $id) {
+        id
+        number
+        created
+        status
+        shippingAddress {
+          firstName
+          lastName
+          streetAddress1
+          city
+          postalCode
+          country {
+            code
+          }
+          phone
+        }
+        total {
+          gross {
+            amount
+            currency
+          }
+        }
+        lines {
+          id
+          productName
+          variantName
+          quantity
+          thumbnail {
+            url
+            alt
+          }
+          unitPrice {
+            gross {
+              amount
+              currency
+            }
+          }
+        }
+      }
+    }
+  `;
+  const data = await fetchSaleorGraphQL(query, { id: orderId }, token || undefined);
+  return data?.order || null;
+}
+

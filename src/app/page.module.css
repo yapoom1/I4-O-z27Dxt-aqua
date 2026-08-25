@@ -1,0 +1,157 @@
+.mainContent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topSection {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 16px;
+  padding: 0 24px 16px 24px;
+}
+
+@media (min-width: 768px) {
+  .topSection {
+    padding: 0 32px 16px 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .topSection {
+    padding: 0 32px 16px 32px;
+  }
+}
+
+.heroContainer {
+  position: relative;
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.heroContainer:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+}
+
+.heroImage {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.heroContainer:hover .heroImage {
+  transform: scale(1.025);
+}
+
+.heroLeft, .heroRight {
+  width: 100%;
+}
+
+.desktopCategories {
+  display: none;
+}
+
+.mobileCategories {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .topSection {
+    padding: 0 32px 16px 32px;
+    margin-bottom: 12px;
+  }
+  
+  .desktopCategories {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .mobileCategories {
+    display: none;
+  }
+}
+
+/* Left-aligned Section Headings */
+.sectionHeadingWrapper {
+  padding: 16px 24px 4px 24px;
+  margin-top: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .sectionHeadingWrapper {
+    padding: 16px 32px 4px 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sectionHeadingWrapper {
+    padding: 16px 0 4px 0;
+  }
+}
+
+.sectionHeading {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.6px;
+  text-align: left;
+}
+
+/* Rotating Circle Badge Overlay */
+.rotatingBadgeContainer {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through to banner */
+}
+
+.rotatingBadge {
+  width: 96px;
+  height: 96px;
+  animation: spinBadge 18s linear infinite;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
+}
+
+@keyframes spinBadge {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rotatingText {
+  font-size: 7px;
+  font-weight: 900;
+  fill: #0f172a; /* high contrast dark charcoal */
+  letter-spacing: 0.9px;
+}
+
+.badgeCenterBg {
+  fill: #ffffff;
+  stroke: rgba(0, 112, 243, 0.06);
+  stroke-width: 0.5px;
+}
+
+.badgeOuterBg {
+  fill: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  stroke: rgba(0, 0, 0, 0.04);
+  stroke-width: 0.5px;
+}
+

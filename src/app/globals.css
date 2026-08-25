@@ -1,0 +1,134 @@
+:root {
+  --background: #f6f6f8;
+  --foreground: #121212;
+  --text-primary: #121212;
+  --text-secondary: #7e7e82;
+  --card-bg: #ffffff;
+  --banner-bg: linear-gradient(135deg, #eef0f3 0%, #e3e6ea 100%);
+  --input-bg: #f0f1f5;
+
+  /* Royal Blue Theme Colors */
+  --accent: #4169e1;
+  --accent-rgb: 65, 105, 225;
+  --accent-gradient: linear-gradient(135deg, #4169e1 0%, #2b4cbe 100%);
+  --accent-purple: var(--accent);
+  --accent-purple-gradient: var(--accent-gradient);
+
+  --like-active: #ff3b30;
+
+  /* Global Base Colors */
+  --white: #ffffff;
+  --white-rgb: 255, 255, 255;
+  --black: #000000;
+  --black-rgb: 0, 0, 0;
+
+  --font-sans: var(--font-fellix), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0d0d12;
+    --foreground: #f4f4f7;
+    --text-primary: #f4f4f7;
+    --text-secondary: #8e8e93;
+    --card-bg: #1c1c1e;
+    --banner-bg: linear-gradient(135deg, #1c1c24 0%, #252535 100%);
+    --input-bg: #2c2c2e;
+
+    /* Royal Blue Theme Colors */
+    --accent: #5c85ff;
+    --accent-rgb: 92, 133, 255;
+    --accent-gradient: linear-gradient(135deg, #5c85ff 0%, #4169e1 100%);
+    --accent-purple: var(--accent);
+    --accent-purple-gradient: var(--accent-gradient);
+
+    --like-active: #ff453a;
+  }
+}
+
+/* Forced Theme Attribute Overrides */
+html[data-theme="light"] {
+  --background: #f6f6f8;
+  --foreground: #121212;
+  --text-primary: #121212;
+  --text-secondary: #7e7e82;
+  --card-bg: #ffffff;
+  --banner-bg: linear-gradient(135deg, #eef0f3 0%, #e3e6ea 100%);
+  --input-bg: #f0f1f5;
+
+  --accent: #4169e1;
+  --accent-rgb: 65, 105, 225;
+  --accent-gradient: linear-gradient(135deg, #4169e1 0%, #2b4cbe 100%);
+  --accent-purple: var(--accent);
+  --accent-purple-gradient: var(--accent-gradient);
+
+  --like-active: #ff3b30;
+}
+
+html[data-theme="dark"] {
+  --background: #0d0d12;
+  --foreground: #f4f4f7;
+  --text-primary: #f4f4f7;
+  --text-secondary: #8e8e93;
+  --card-bg: #1c1c1e;
+  --banner-bg: linear-gradient(135deg, #1c1c24 0%, #252535 100%);
+  --input-bg: #2c2c2e;
+
+  --accent: #5c85ff;
+  --accent-rgb: 92, 133, 255;
+  --accent-gradient: linear-gradient(135deg, #5c85ff 0%, #4169e1 100%);
+  --accent-purple: var(--accent);
+  --accent-purple-gradient: var(--accent-gradient);
+
+  --like-active: #ff453a;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  min-height: 100%;
+  width: 100%;
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body {
+  display: block;
+}
+
+/* Custom Scrollbar hides for slider elements */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Base button and inputs reset */
+button {
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+input {
+  border: none;
+  font: inherit;
+  outline: none;
+}

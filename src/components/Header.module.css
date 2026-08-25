@@ -1,0 +1,358 @@
+.headerWrapper {
+  position: relative;
+  width: 100%;
+  z-index: 100;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 10px 2px;
+  background-color: var(--background);
+}
+
+@media (min-width: 768px) {
+  .header {
+    padding: 28px 28px 14px 4px;
+  }
+}
+
+.profilePic {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -12px;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.logoContainer:hover {
+  transform: translateY(-1px) scale(1.025);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 112, 243, 0.15);
+}
+
+.logoContainer:active {
+  transform: scale(0.97);
+}
+
+.logo {
+  display: block;
+  transition: filter 0.3s ease;
+}
+
+.logoContainer:hover .logo {
+  filter: brightness(1.02);
+}
+
+.actionsContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconButton {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  transform: scale(1.04);
+}
+
+.iconButton:active {
+  transform: scale(0.96);
+  background-color: var(--input-bg);
+}
+
+.activeButton {
+  background-color: var(--input-bg);
+  border-color: rgba(0, 112, 243, 0.2);
+}
+
+.icon {
+  color: var(--text-primary);
+}
+
+.notificationBadge {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--like-active);
+  border-radius: 50%;
+  border: 1.5px solid var(--card-bg);
+}
+
+.cartBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background-color: var(--like-active);
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1.5px solid var(--background);
+}
+
+/* Global Slide-down Search Bar Overlay */
+.searchBarOverlay {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: var(--background);
+  padding: 10px 16px 14px 16px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+  animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  z-index: 90;
+}
+
+@media (min-width: 768px) {
+  .searchBarOverlay {
+    padding: 12px 32px 16px 32px;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.searchFieldWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.fieldSearchIcon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 36px 10px 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: var(--card-bg);
+  font-size: 14px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: rgba(0, 112, 243, 0.25);
+  box-shadow: 0 2px 10px rgba(0, 112, 243, 0.04);
+}
+
+.clearBtn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.clearBtn:hover {
+  opacity: 1;
+}
+
+.sortDropdownWrapper {
+  position: relative;
+}
+
+.filterBtn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterBtn:hover {
+  transform: scale(1.03);
+}
+
+.filterBtnActive {
+  border-color: #0070f3;
+  color: #0070f3;
+}
+
+.activeDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background-color: #0070f3;
+  border-radius: 50%;
+}
+
+.closeBtn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--input-bg);
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Dropdown Menu */
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background-color: var(--card-bg);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  z-index: 110;
+  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  margin-bottom: 4px;
+}
+
+.resetBtn {
+  background: none;
+  border: none;
+  color: #0070f3;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.optionItem:hover {
+  background-color: var(--input-bg);
+}
+
+.optionSelected {
+  background-color: rgba(0, 112, 243, 0.06);
+  color: #0070f3;
+  font-weight: 600;
+}
+
+.optionContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .logoContainer {
+    background: rgba(28, 28, 36, 0.75);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  .logoContainer:hover {
+    background: rgba(28, 28, 36, 0.95);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
