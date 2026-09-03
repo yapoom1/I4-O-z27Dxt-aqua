@@ -23,6 +23,43 @@
   object-fit: cover;
 }
 
+.brandWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brandWrapper:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.brandTitle {
+  font-size: 19px;
+  font-weight: 850;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+}
+
+.brandTitleAccent {
+  color: #0072ff;
+  background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media (min-width: 768px) {
+  .brandTitle {
+    font-size: 22px;
+  }
+}
+
 .logoContainer {
   display: flex;
   align-items: center;

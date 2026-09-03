@@ -254,6 +254,16 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.optionalTag {
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: none;
+  color: #8e8e93;
 }
 
 .textInput {

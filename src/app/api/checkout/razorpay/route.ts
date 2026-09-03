@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import Razorpay from "razorpay";
+import { getValidToken, initializePaymentGateway } from "@/services/saleor";
 
 export async function POST(request: Request) {
   let amount: number | undefined;
@@ -11,19 +13,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Payment amount is required" }, { status: 400 });
     }
 
+    const cookieStore = await cookies();
+    const token = await getValidToken(cookieStore);
+
+    // 1. Try initializing payment via Saleor backend DB mutation (where Razorpay keys are configured)
+    if (checkoutId) {
+      try {
+        const gatewayConfig = await initializePaymentGateway(checkoutId, amount, "app.saleor.razorpay", token || undefined);
+        if (gatewayConfig?.data) {
+          const parsedData = typeof gatewayConfig.data === "string" ? JSON.parse(gatewayConfig.data) : gatewayConfig.data;
+          if (parsedData?.order_id || parsedData?.orderId || parsedData?.key) {
+            return NextResponse.json({
+              success: true,
+              orderId: parsedData.order_id || parsedData.orderId,
+              amount: parsedData.amount || Math.round(amount) * 100,
+              currency: parsedData.currency || "INR",
+              keyId: parsedData.key || parsedData.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+              fromBackendDb: true,
+            });
+          }
+        }
+      } catch (backendInitErr: any) {
+        console.warn("Saleor backend paymentGatewayInitialize info:", backendInitErr.message);
+      }
+    }
+
+    // 2. Direct Server-side fallback if Saleor Razorpay plugin is handled independently
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_gubera20Theme";
     const keySecret = process.env.RAZORPAY_KEY_SECRET || "dummysecretkey";
 
-    // Initialize Razorpay
     const razorpay = new Razorpay({
       key_id: keyId,
       key_secret: keySecret,
     });
 
-    // Convert Saleor's USD currency to INR for local Razorpay Test API compatibility
-    // (1 USD = 83 INR, and Razorpay expects amount in paise: 1 INR = 100 paise)
     const currency = "INR";
-    const amountInINR = Math.round(amount * 83);
+    const amountInINR = Math.round(amount);
     const amountInPaise = amountInINR * 100;
 
     const options = {
@@ -42,7 +67,7 @@ export async function POST(request: Request) {
       keyId,
     });
   } catch (error: any) {
-    console.warn("Razorpay orders.create failed, falling back to simulated order ID for local test workflow:", error.message || error);
+    console.warn("Razorpay orders.create fallback:", error.message || error);
     
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_gubera20Theme";
     return NextResponse.json({

@@ -6,7 +6,8 @@ import {
   addCheckoutLines,
   updateCheckoutLines,
   deleteCheckoutLines,
-  getValidToken
+  getValidToken,
+  rewriteSaleorMediaUrl
 } from "@/services/saleor";
 
 function mapCheckoutToCartItems(checkout: any) {
@@ -14,23 +15,24 @@ function mapCheckoutToCartItems(checkout: any) {
   return checkout.lines.map((line: any) => {
     const variant = line.variant;
     const product = variant.product;
-    const mediaUrl = variant.media?.url || product.thumbnail?.url || "";
+    const rawMedia = variant.media?.url || product?.thumbnail?.url || "";
+    const mediaUrl = rewriteSaleorMediaUrl(rawMedia);
     const priceAmount = variant.pricing?.price?.gross?.amount || 0;
     
     // Parse size and color from variant name (e.g., "M / Red")
-    const variantParts = variant.name.split("/").map((s: string) => s.trim());
+    const variantParts = variant.name ? variant.name.split("/").map((s: string) => s.trim()) : ["Standard"];
     const size = variantParts[0] || "Standard";
     const color = variantParts[1] || "";
 
     return {
       id: variant.id,
       variantId: variant.id,
-      productId: product.id,
+      productId: product?.id,
       checkoutLineId: line.id,
-      name: product.name,
-      price: `$${priceAmount.toFixed(2)}`,
+      name: product?.name || variant.name || "Product",
+      price: `\u20b9${priceAmount.toFixed(0)}`,
       numericPrice: priceAmount,
-      image: mediaUrl || "!",
+      image: mediaUrl || "",
       quantity: line.quantity,
       size,
       color
@@ -44,7 +46,16 @@ export async function GET() {
     const token = await getValidToken(cookieStore);
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({
+        success: true,
+        checkoutId: null,
+        appliedCoupon: null,
+        discountAmount: 0,
+        subtotal: 0,
+        shippingCost: 0,
+        totalAmount: 0,
+        items: []
+      });
     }
 
     const checkout = await getUserCheckout(token);
@@ -70,7 +81,16 @@ export async function POST(request: Request) {
     const token = await getValidToken(cookieStore);
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({
+        success: true,
+        checkoutId: null,
+        appliedCoupon: null,
+        discountAmount: 0,
+        subtotal: 0,
+        shippingCost: 0,
+        totalAmount: 0,
+        items: []
+      });
     }
 
     const { items, variantId, quantity } = await request.json();

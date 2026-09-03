@@ -261,27 +261,34 @@ export default function CartSidebar() {
               <div className={styles.pricingSummary}>
                  <div className={styles.summaryRow}>
                    <span>Sub total:</span>
-                   <span>${subtotal.toFixed(2)}</span>
+                   <span>₹{subtotal.toFixed(0)}</span>
                  </div>
                  {appliedCoupon && (
                    <div className={styles.summaryRow}>
                      <span>Discount ({appliedCoupon}):</span>
-                     <span>-${discountAmount.toFixed(2)}</span>
+                     <span>-₹{discountAmount.toFixed(0)}</span>
                    </div>
                  )}
                 <div className={styles.summaryRow}>
                   <span>Shipping:</span>
-                  <span>${shippingCost.toFixed(2)}</span>
+                  <span>{shippingCost === 0 ? "Free" : `₹${shippingCost.toFixed(0)}`}</span>
                 </div>
                 <div className={`${styles.summaryRow} ${styles.totalRow}`}>
                   <span>Total:</span>
-                  <span>${totalAmount.toFixed(2)}</span>
+                  <span>₹{totalAmount.toFixed(0)}</span>
                 </div>
               </div>
 
               {/* Checkout Button */}
               <div className={styles.checkoutAction}>
-                <button className={styles.checkoutBtn} type="button">
+                <button
+                  className={styles.checkoutBtn}
+                  type="button"
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    router.push("/cart");
+                  }}
+                >
                   Proceed to checkout
                 </button>
               </div>

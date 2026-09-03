@@ -7,6 +7,10 @@ import BottomNav from "@/components/BottomNav";
 import { getProducts } from "@/services/saleor";
 import Image from "next/image";
 import styles from "./page.module.css";
+import Clientele from "@/components/Clientele";
+import VideoTestimonials from "@/components/VideoTestimonials";
+import InstagramFeed from "@/components/InstagramFeed";
+import Testimonials from "@/components/Testimonials";
 
 export default async function Home() {
   const products = await getProducts(24);
@@ -76,6 +80,11 @@ export default async function Home() {
           <h2 className={styles.sectionHeading}>Our Purifiers</h2>
         </div>
         <ProductCatalog initialProducts={products} />
+
+        <Clientele />
+        <VideoTestimonials />
+        <InstagramFeed />
+        <Testimonials />
       </main>
       <BottomNav />
     </MobileContainer>

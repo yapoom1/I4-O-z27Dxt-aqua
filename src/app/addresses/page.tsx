@@ -34,16 +34,13 @@ export default function ShippingAddressesPage() {
     e.preventDefault();
     if (
       !name.trim() ||
-      !companyName.trim() ||
       !street.trim() ||
-      !streetAddress2.trim() ||
       !city.trim() ||
-      !cityArea.trim() ||
       !stateVal.trim() ||
       !postalCode.trim() ||
       !phone.trim()
     ) {
-      alert("Please fill in all required address parameters.");
+      alert("Please fill in: Full Name, Street Address, City, State, PIN Code, and Phone Number.");
       return;
     }
 
@@ -162,10 +159,10 @@ export default function ShippingAddressesPage() {
               <form onSubmit={handleAddAddress} className={styles.addressForm}>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Name / Label</label>
+                  <label className={styles.inputLabel}>Full Name / Contact Person *</label>
                   <input
                     type="text"
-                    placeholder="e.g.  (Home)"
+                    placeholder="e.g. Karthik Raja"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className={styles.textInput}
@@ -174,22 +171,22 @@ export default function ShippingAddressesPage() {
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Company Name</label>
+                  <label className={styles.inputLabel}>Phone Number *</label>
                   <input
-                    type="text"
-                    placeholder="e.g. Acme Corp"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    type="tel"
+                    placeholder="e.g. 9840123456"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     className={styles.textInput}
                     required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Street Address 1</label>
+                  <label className={styles.inputLabel}>Street Address Line 1 *</label>
                   <input
                     type="text"
-                    placeholder="e.g. 124 Baker Street"
+                    placeholder="e.g. 42 Anna Nagar, 2nd Main Road"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
                     className={styles.textInput}
@@ -198,19 +195,18 @@ export default function ShippingAddressesPage() {
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Street Address 2 (Apartment, suite, unit, etc.)</label>
+                  <label className={styles.inputLabel}>Street Address Line 2 (Flat, Floor, Building) <span className={styles.optionalTag}>(Optional)</span></label>
                   <input
                     type="text"
-                    placeholder="e.g. Flat 4B"
+                    placeholder="e.g. Flat 3B, Sunshine Apartments"
                     value={streetAddress2}
                     onChange={(e) => setStreetAddress2(e.target.value)}
                     className={styles.textInput}
-                    required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>City</label>
+                  <label className={styles.inputLabel}>City *</label>
                   <input
                     type="text"
                     placeholder="e.g. Chennai"
@@ -222,19 +218,18 @@ export default function ShippingAddressesPage() {
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>City Area / Locality</label>
+                  <label className={styles.inputLabel}>Locality / Area <span className={styles.optionalTag}>(Optional)</span></label>
                   <input
                     type="text"
-                    placeholder="e.g. Westminster or Indiranagar"
+                    placeholder="e.g. Anna Nagar West"
                     value={cityArea}
                     onChange={(e) => setCityArea(e.target.value)}
                     className={styles.textInput}
-                    required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>State / Province / Region</label>
+                  <label className={styles.inputLabel}>State / Region *</label>
                   <input
                     type="text"
                     placeholder="e.g. Tamil Nadu"
@@ -246,10 +241,10 @@ export default function ShippingAddressesPage() {
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Postcode / ZIP</label>
+                  <label className={styles.inputLabel}>PIN / Postal Code *</label>
                   <input
                     type="text"
-                    placeholder="e.g.600008"
+                    placeholder="e.g. 600040"
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     className={styles.textInput}
@@ -258,24 +253,23 @@ export default function ShippingAddressesPage() {
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Country</label>
+                  <label className={styles.inputLabel}>Company Name <span className={styles.optionalTag}>(Optional)</span></label>
                   <input
                     type="text"
-                    placeholder="e.g. India"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="e.g. AquaCare Technologies"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
                     className={styles.textInput}
-                    required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Phone Number</label>
+                  <label className={styles.inputLabel}>Country *</label>
                   <input
-                    type="tel"
-                    placeholder="e.g. +91 1234567890"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    type="text"
+                    placeholder="India"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
                     className={styles.textInput}
                     required
                   />

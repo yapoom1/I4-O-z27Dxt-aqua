@@ -1,0 +1,218 @@
+.section {
+  width: 100%;
+  padding: 32px 16px 84px 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: 44px 32px 64px 32px;
+  }
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  max-width: 1280px;
+  margin: 0 auto 20px auto;
+  text-align: left;
+}
+
+.headingWrapper {
+  flex: 1;
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+  margin: 0 0 4px 0;
+}
+
+@media (min-width: 768px) {
+  .heading {
+    font-size: 26px;
+  }
+}
+
+.headingHighlight {
+  color: var(--accent);
+}
+
+.subheading {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.navButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+}
+
+.navBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  border: 1px solid rgba(var(--black-rgb), 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.navBtn:hover {
+  background-color: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.navBtn:active {
+  transform: scale(0.92);
+}
+
+/* Slider Track */
+.sliderContainer {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.sliderTrack {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 8px 4px 20px 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.sliderTrack::-webkit-scrollbar {
+  display: none;
+}
+
+/* Professional Story / Reel Card */
+.iframeCard {
+  flex: 0 0 250px;
+  width: 250px;
+  height: 440px;
+  scroll-snap-align: start;
+  position: relative;
+  background-color: #0b0f19;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .iframeCard {
+    flex: 0 0 280px;
+    width: 280px;
+    height: 480px;
+  }
+}
+
+.iframeCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -6px rgba(0, 102, 204, 0.22);
+  border-color: rgba(var(--accent-rgb), 0.4);
+}
+
+/* Subtle Top Bar Overlay */
+.cardTopBar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.instaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.2px;
+}
+
+.instaBadgeIcon {
+  color: #f43f5e;
+}
+
+.iframeWrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #000000;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.instaIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000000;
+  display: block;
+}
+
+.followButtonContainer {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.followButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: #ffffff;
+  padding: 12px 26px;
+  border-radius: 28px;
+  font-weight: 750;
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.25s ease;
+  box-shadow: 0 4px 16px rgba(220, 39, 67, 0.3);
+}
+
+.followButton:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+  box-shadow: 0 8px 24px rgba(220, 39, 67, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  .iframeCard {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}

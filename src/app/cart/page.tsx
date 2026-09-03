@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Plus, Minus, X, ChevronLeft, ShoppingBag, Check, Trash2 } from "lucide-react";
+import { Plus, Minus, X, ChevronLeft, ShoppingBag, Check, Trash2, CreditCard, Banknote, ShieldCheck } from "lucide-react";
 import MobileContainer from "@/components/MobileContainer";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/context/CartContext";
@@ -25,6 +25,8 @@ export default function MobileCartPage() {
     selectedAddressId,
     selectAddress,
     isLoggedIn,
+    user,
+    clearCart,
     setLoginModalOpen,
   } = useCart();
 
@@ -34,9 +36,12 @@ export default function MobileCartPage() {
 
   const [promoCode, setPromoCode] = useState("");
   const [isSelectingAddress, setIsSelectingAddress] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Guest Information States
   const [guestPhone, setGuestPhone] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [createAccountOpt, setCreateAccountOpt] = useState(false);
   const [emailOffers, setEmailOffers] = useState(false);
 
@@ -44,7 +49,7 @@ export default function MobileCartPage() {
   const [guestName, setGuestName] = useState("");
   const [guestStreet, setGuestStreet] = useState("");
   const [guestCityState, setGuestCityState] = useState("");
-  const [guestCountry, setGuestCountry] = useState("UK");
+  const [guestCountry, setGuestCountry] = useState("IN");
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId) || addresses.find((a) => a.isDefault) || addresses[0];
 
@@ -74,6 +79,8 @@ export default function MobileCartPage() {
   };
 
   const handleCheckout = async () => {
+    if (isProcessing) return;
+
     if (isLoggedIn) {
       if (addresses.length === 0) {
         alert("Please add a shipping address in your profile before checking out.");
@@ -95,7 +102,75 @@ export default function MobileCartPage() {
       }
     }
 
-    // 1. Load Razorpay Script
+    const cartItemsPayload = cartItems.map((item) => ({
+      variantId: item.variantId,
+      quantity: item.quantity,
+    }));
+
+    const userFullName = (isLoggedIn ? (user?.name || selectedAddress?.name) : guestName) || "Valued Customer";
+    const nameParts = userFullName.trim().split(" ").filter(Boolean);
+    const firstName = nameParts[0] || "Valued";
+    const lastName = nameParts.slice(1).join(" ") || "Customer";
+    const resolvedPhone = (isLoggedIn ? (user?.phone || selectedAddress?.phone) : guestPhone) || "9876543210";
+    const resolvedEmail = (isLoggedIn ? user?.email : guestEmail) || `${resolvedPhone.replace(/[^0-9]/g, "")}@aquacare.com`;
+
+    const addressInputObject = isLoggedIn
+      ? {
+          firstName,
+          lastName,
+          streetAddress1: selectedAddress?.street || "Main Road",
+          city: selectedAddress?.cityState?.split(",")[0]?.trim() || "Chennai",
+          postalCode: selectedAddress?.cityState?.match(/\b\d{5,6}\b/)?.[0] || "600001",
+          country: selectedAddress?.country || "IN",
+          countryArea: selectedAddress?.state || "Tamil Nadu",
+          phone: resolvedPhone,
+        }
+      : {
+          firstName,
+          lastName,
+          streetAddress1: guestStreet || "Main Road",
+          city: guestCityState.split(",")[0]?.trim() || "Chennai",
+          postalCode: guestCityState.match(/\b\d{5,6}\b/)?.[0] || "600001",
+          country: guestCountry || "IN",
+          countryArea: "Tamil Nadu",
+          phone: resolvedPhone,
+        };
+
+    // --- CASE 1: Cash On Delivery (COD) ---
+    if (paymentMethod === "cod") {
+      setIsProcessing(true);
+      try {
+        const completeRes = await fetch("/api/checkout/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: cartItemsPayload,
+            customerName: userFullName,
+            email: resolvedEmail,
+            phone: resolvedPhone,
+            address: addressInputObject,
+            paymentMethod: "COD",
+          }),
+        });
+
+        const completeData = await completeRes.json();
+        if (completeData.success) {
+          clearCart();
+          alert(`Order placed successfully with Cash on Delivery! Order #${completeData.orderNumber}`);
+          router.push(`/order/${completeData.orderId}`);
+        } else {
+          alert(`Order placement failed: ${completeData.error || "Internal Error"}`);
+        }
+      } catch (err: any) {
+        console.error("COD checkout error:", err);
+        alert("Failed to place Cash on Delivery order. Please try again.");
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // --- CASE 2: Online Payment via Razorpay ---
     const isScriptLoaded = await loadRazorpayScript();
     if (!isScriptLoaded) {
       alert("Failed to load Razorpay payment gateway. Please check your internet connection.");
@@ -103,109 +178,85 @@ export default function MobileCartPage() {
     }
 
     try {
-      // 2. Call local API to create Razorpay Order
-      const cartItemsPayload = cartItems.map(item => ({
-        variantId: item.variantId,
-        quantity: item.quantity
-      }));
-
+      setIsProcessing(true);
       const resOrder = await fetch("/api/checkout/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: totalAmount,
-          checkoutId: selectedAddressId || undefined
-        })
+        }),
       });
 
       const orderData = await resOrder.json();
       if (!orderData.success) {
         alert("Razorpay payment initialization failed. Please try again.");
+        setIsProcessing(false);
         return;
       }
 
-      // Parse first and last names for shipping address payload
-      const firstName = isLoggedIn 
-        ? (selectedAddress?.name?.split(" ")[0] || "Customer") 
-        : (guestName.split(" ")[0] || "Guest");
-      const lastName = isLoggedIn 
-        ? (selectedAddress?.name?.split(" ").slice(1).join(" ") || "") 
-        : (guestName.split(" ").slice(1).join(" ") || "");
-
-      const addressInputObject = isLoggedIn ? {
-        firstName,
-        lastName,
-        streetAddress1: selectedAddress?.street || "",
-        city: selectedAddress?.cityState?.split(",")[0]?.trim() || "",
-        postalCode: selectedAddress?.cityState?.match(/\b\d{5}\b/)?.[0] || "00000",
-        country: selectedAddress?.country || "UK",
-        phone: selectedAddress?.phone || "0000000000"
-      } : {
-        firstName,
-        lastName,
-        streetAddress1: guestStreet,
-        city: guestCityState.split(",")[0]?.trim() || "",
-        postalCode: guestCityState.match(/\b\d{5}\b/)?.[0] || "00000",
-        country: guestCountry,
-        phone: guestPhone
-      };
-
-      // 3. Setup Razorpay Checkout parameters
-        const options = {
-          key: orderData.keyId,
-          amount: orderData.amount,
-          currency: orderData.currency,
-          name: "AquaCare Hi-Tech",
-          description: "Secure Order Checkout",
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "AquaCare Hi-Tech",
+        description: "Secure Order Checkout",
         order_id: orderData.orderId,
         handler: async function (response: any) {
           try {
-            // Trigger Saleor Checkout completion
             const completeRes = await fetch("/api/checkout/complete", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                checkoutId: isLoggedIn ? (selectedAddressId || undefined) : undefined,
-                items: !isLoggedIn ? cartItemsPayload : undefined,
-                phone: isLoggedIn ? (selectedAddress?.phone || "0000000000") : guestPhone,
+                items: cartItemsPayload,
+                customerName: userFullName,
+                email: resolvedEmail,
+                phone: resolvedPhone,
                 address: addressInputObject,
+                paymentMethod: "RAZORPAY",
                 paymentInfo: {
                   razorpayPaymentId: response.razorpay_payment_id,
                   razorpayOrderId: response.razorpay_order_id,
-                  razorpaySignature: response.razorpay_signature
-                }
-              })
+                  razorpaySignature: response.razorpay_signature,
+                },
+              }),
             });
 
             const completeData = await completeRes.json();
             if (completeData.success) {
-              alert(`Order placed successfully! Order #${completeData.orderNumber}`);
-              
-              // Clear current local/cookie cart
-              // (Reload or redirecting will auto-fetch clean checkout)
+              clearCart();
+              alert(`Order placed successfully via Razorpay! Order #${completeData.orderNumber}`);
               router.push(`/order/${completeData.orderId}`);
             } else {
               alert(`Order placement failed: ${completeData.error || "Internal Error"}`);
             }
-          } catch (err: any) {
-            console.error("Saleor order creation error:", err);
-            alert("Payment processed, but order creation failed. Please contact support.");
+          } catch (err) {
+            console.error("Payment confirmation failed:", err);
+            alert("Payment completed but order finalization had an issue. Please check your Orders.");
+          } finally {
+            setIsProcessing(false);
           }
         },
+        modal: {
+          ondismiss: function () {
+            setIsProcessing(false);
+          },
+        },
         prefill: {
-          name: isLoggedIn ? (selectedAddress?.name || "") : guestName,
-          contact: isLoggedIn ? (selectedAddress?.phone || "") : guestPhone
+          name: userFullName,
+          contact: resolvedPhone,
+          email: resolvedEmail,
         },
         theme: {
-          color: "#000000"
-        }
+          color: "#0066cc",
+        },
       };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
     } catch (err: any) {
-      console.error("Razorpay setup error:", err);
-      alert(`Razorpay checkout initialization failed: ${err.message}`);
+      console.error("Razorpay initiation error:", err);
+      alert("Failed to initiate online payment.");
+      setIsProcessing(false);
     }
   };
 
@@ -564,25 +615,68 @@ export default function MobileCartPage() {
               </div>
             )}
 
+            {/* Payment Method Selector Section */}
+            <div className={styles.paymentSection}>
+              <div className={styles.sectionHeader}>
+                <h4 className={styles.sectionTitle}>Payment Method</h4>
+              </div>
+
+              <div className={styles.paymentOptionsList}>
+                {/* Razorpay Online Payment Option */}
+                <div
+                  className={`${styles.paymentCard} ${paymentMethod === "razorpay" ? styles.paymentCardActive : ""}`}
+                  onClick={() => setPaymentMethod("razorpay")}
+                >
+                  <div className={styles.paymentLeft}>
+                    <div className={`${styles.radioIndicator} ${paymentMethod === "razorpay" ? styles.radioIndicatorActive : ""}`}>
+                      {paymentMethod === "razorpay" && <div className={styles.radioInnerDot} />}
+                    </div>
+                    <div className={styles.paymentDetails}>
+                      <span className={styles.paymentTitle}>Online Payment (Razorpay)</span>
+                      <span className={styles.paymentSubtext}>UPI (Google Pay, PhonePe, Paytm), NetBanking, Cards & Wallets</span>
+                    </div>
+                  </div>
+                  <span className={styles.paymentBadge}>Instant & Secure</span>
+                </div>
+
+                {/* Cash on Delivery (COD) Option */}
+                <div
+                  className={`${styles.paymentCard} ${paymentMethod === "cod" ? styles.paymentCardActive : ""}`}
+                  onClick={() => setPaymentMethod("cod")}
+                >
+                  <div className={styles.paymentLeft}>
+                    <div className={`${styles.radioIndicator} ${paymentMethod === "cod" ? styles.radioIndicatorActive : ""}`}>
+                      {paymentMethod === "cod" && <div className={styles.radioInnerDot} />}
+                    </div>
+                    <div className={styles.paymentDetails}>
+                      <span className={styles.paymentTitle}>Cash on Delivery (COD)</span>
+                      <span className={styles.paymentSubtext}>Pay with Cash or UPI upon delivery / installation</span>
+                    </div>
+                  </div>
+                  <span className={styles.paymentBadge}>Pay at Doorstep</span>
+                </div>
+              </div>
+            </div>
+
             {/* Price Breakdowns */}
             <div className={styles.pricingSummary}>
               <div className={styles.summaryRow}>
                 <span>Sub total:</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toFixed(0)}</span>
               </div>
               {appliedCoupon && (
                 <div className={styles.summaryRow}>
                   <span>Discount ({appliedCoupon}):</span>
-                  <span>-${discountAmount.toFixed(2)}</span>
+                  <span>-₹{discountAmount.toFixed(0)}</span>
                 </div>
               )}
               <div className={styles.summaryRow}>
                 <span>Shipping:</span>
-                <span>${shippingCost.toFixed(2)}</span>
+                <span>{shippingCost === 0 ? "Free" : `₹${shippingCost.toFixed(0)}`}</span>
               </div>
               <div className={`${styles.summaryRow} ${styles.totalRow}`}>
                 <span>Total:</span>
-                <span>${totalAmount.toFixed(2)}</span>
+                <span>₹{totalAmount.toFixed(0)}</span>
               </div>
             </div>
 
@@ -592,8 +686,14 @@ export default function MobileCartPage() {
                 className={styles.checkoutBtn}
                 type="button"
                 onClick={handleCheckout}
+                disabled={isProcessing}
+                style={{ opacity: isProcessing ? 0.7 : 1 }}
               >
-                Proceed to checkout
+                {isProcessing
+                  ? "Processing Order..."
+                  : paymentMethod === "cod"
+                  ? "Place Order (Cash on Delivery)"
+                  : "Proceed to Pay with Razorpay"}
               </button>
             </div>
           </>

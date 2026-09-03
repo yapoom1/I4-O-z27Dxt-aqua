@@ -1,0 +1,166 @@
+.section {
+  width: 100%;
+  padding: 36px 16px 64px 16px;
+  box-sizing: border-box;
+  background: var(--bg-primary, #f8fafc);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: 48px 32px 72px 32px;
+  }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 28px auto;
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  margin: 0 0 6px 0;
+}
+
+@media (min-width: 768px) {
+  .heading {
+    font-size: 28px;
+  }
+}
+
+.headingHighlight {
+  color: #ff0000;
+}
+
+.subheading {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.grid {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.videoCard {
+  position: relative;
+  width: 250px;
+  height: 440px;
+  aspect-ratio: 9 / 16;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0b0f19;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.12),
+    0 8px 10px -6px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (min-width: 768px) {
+  .videoCard {
+    width: 270px;
+    height: 480px;
+    border-radius: 22px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.videoCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px -6px rgba(255, 0, 0, 0.25);
+  border-color: rgba(255, 0, 0, 0.4);
+}
+
+.cardTopBar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.shortsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 750;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.3px;
+}
+
+.shortsBadge svg {
+  color: #ff0000;
+}
+
+.thumbnailContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  outline: none;
+  background: #000000;
+}
+
+.thumbnailImage {
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.videoCard:hover .thumbnailImage {
+  transform: scale(1.05);
+}
+
+.iframeWrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #000000;
+}
+
+.youtubeIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  .videoCard {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}

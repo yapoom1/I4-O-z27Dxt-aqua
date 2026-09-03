@@ -68,6 +68,7 @@ interface CartContextType {
   user: UserProfile | null;
   login: (phone: string, email?: string, name?: string, ordersCount?: number, addresses?: any[]) => void;
   logout: () => void;
+  updateUserProfile: (name: string, email?: string, phone?: string) => Promise<boolean>;
   isLoginModalOpen: boolean;
   setLoginModalOpen: (open: boolean) => void;
 }
@@ -87,6 +88,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const login = (phone: string, email?: string, name?: string, ordersCount?: number, userAddresses?: any[]) => {
     setIsLoggedIn(true);
+    const mappedAddresses = userAddresses && userAddresses.length > 0 ? userAddresses.map((addr: any) => ({
+      id: addr.id,
+      name: [addr.firstName, addr.lastName].filter(Boolean).join(" ") || name || "Saleor User",
+      street: addr.streetAddress1 || "",
+      streetAddress2: addr.streetAddress2 || "",
+      cityState: [addr.city, addr.countryArea, addr.postalCode].filter(Boolean).join(", "),
+      cityArea: addr.cityArea || "",
+      state: addr.countryArea || "",
+      companyName: addr.companyName || "",
+      postalCode: addr.postalCode || "",
+      country: addr.country?.country || addr.country?.code || "IN",
+      phone: addr.phone || phone,
+      isDefault: addr.isDefaultShippingAddress || false,
+    })) : [];
+
     setUser({
       name: name || "Saleor User",
       email: email || "",
@@ -94,24 +110,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       avatar: "/images/profile.png",
       ordersCount: ordersCount || 0,
     });
-    if (userAddresses && userAddresses.length > 0) {
-      const mapped = userAddresses.map((addr: any) => ({
-        id: addr.id,
-        name: [addr.firstName, addr.lastName].filter(Boolean).join(" ") || name || "Saleor User",
-        street: addr.streetAddress1 || "",
-        streetAddress2: addr.streetAddress2 || "",
-        cityState: [addr.city, addr.countryArea, addr.postalCode].filter(Boolean).join(", "),
-        cityArea: addr.cityArea || "",
-        state: addr.countryArea || "",
-        companyName: addr.companyName || "",
-        postalCode: addr.postalCode || "",
-        country: addr.country?.country || addr.country?.code || "IN",
-        phone: addr.phone || phone,
-        isDefault: addr.isDefaultShippingAddress || false,
+    
+    if (typeof window !== "undefined") {
+      localStorage.setItem("saleor_local_session", JSON.stringify({
+        phone, email, name, ordersCount, addresses: mappedAddresses
       }));
-      setAddresses(mapped);
-      const defaultAddr = mapped.find((a) => a.isDefault);
-      setSelectedAddressId(defaultAddr ? defaultAddr.id : (mapped[0]?.id || null));
+    }
+
+    if (mappedAddresses.length > 0) {
+      setAddresses(mappedAddresses);
+      const defaultAddr = mappedAddresses.find((a: any) => a.isDefault);
+      setSelectedAddressId(defaultAddr ? defaultAddr.id : (mappedAddresses[0]?.id || null));
     } else {
       setAddresses([]);
       setSelectedAddressId(null);
@@ -123,6 +132,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("saleor_auth_token");
+      localStorage.removeItem("saleor_local_session");
     }
     setAddresses([
       {
@@ -147,6 +157,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setSelectedAddressId("1");
   };
 
+  const updateUserProfile = async (name: string, email?: string, phone?: string): Promise<boolean> => {
+    try {
+      setUser((prev) => prev ? {
+        ...prev,
+        name: name || prev.name,
+        email: email !== undefined ? email : prev.email,
+        phone: phone !== undefined ? phone : prev.phone,
+      } : null);
+
+      if (isLoggedIn) {
+        const res = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, phone }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          return true;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.error("updateUserProfile error:", err);
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => {
@@ -157,6 +194,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         login(data.phone, data.email, data.name, data.ordersCount, data.addresses);
       })
       .catch((err) => {
+        // Fallback to local storage if backend token fails (for dev/demo purposes)
+        const localSession = typeof window !== "undefined" ? localStorage.getItem("saleor_local_session") : null;
+        if (localSession) {
+          try {
+            const parsed = JSON.parse(localSession);
+            login(parsed.phone, parsed.email, parsed.name, parsed.ordersCount, parsed.addresses);
+            return;
+          } catch (e) {}
+        }
+        
         setIsLoggedIn(false);
         setUser(null);
       });
@@ -229,67 +276,57 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [cartItems, isLoggedIn]);
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
-    if (!isLoggedIn) {
-      setCartItems((prev) => {
-        const existingIndex = prev.findIndex(
-          (i) => i.id === item.id && i.size === item.size && i.color === item.color
-        );
-        if (existingIndex > -1) {
-          const newItems = [...prev];
-          newItems[existingIndex].quantity += 1;
-          return newItems;
-        }
-        return [...prev, { ...item, quantity: 1 }];
-      });
-      return;
-    }
+    // 1. Immediately update cart state in memory & storage for instant UI response
+    setCartItems((prev) => {
+      const existingIndex = prev.findIndex(
+        (i) => i.id === item.id && i.size === item.size && i.color === item.color
+      );
+      if (existingIndex > -1) {
+        const newItems = [...prev];
+        newItems[existingIndex].quantity += 1;
+        return newItems;
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
 
-    fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ variantId: item.id, quantity: 1 }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.items) {
-          setCartItems(data.items);
-          setAppliedCoupon(data.appliedCoupon || null);
-          setDiscountAmount(data.discountAmount || 0);
-          setBackendSubtotal(data.subtotal || 0);
-          setBackendShippingCost(data.shippingCost || 0);
-          setBackendTotalPrice(data.totalAmount || 0);
-        }
+    // 2. Open the Cart Drawer to give immediate visual feedback
+    setSidebarOpen(true);
+
+    // 3. If logged in with backend token, sync to Saleor backend
+    if (isLoggedIn) {
+      fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variantId: item.id, quantity: 1 }),
       })
-      .catch((err) => console.error("Add to cart failed:", err));
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.items && data.items.length > 0) {
+            setCartItems(data.items);
+            setAppliedCoupon(data.appliedCoupon || null);
+            setDiscountAmount(data.discountAmount || 0);
+            setBackendSubtotal(data.subtotal || 0);
+            setBackendShippingCost(data.shippingCost || 0);
+            setBackendTotalPrice(data.totalAmount || 0);
+          }
+        })
+        .catch((err) => console.warn("Backend cart sync warning:", err));
+    }
   };
 
   const removeFromCart = (id: string, size: string, color: string) => {
-    if (!isLoggedIn) {
-      setCartItems((prev) =>
-        prev.filter((i) => !(i.id === id && i.size === size && i.color === color))
-      );
-      return;
+    const itemToRemove = cartItems.find((i) => i.id === id && i.size === size && i.color === color);
+    const lineId = itemToRemove?.checkoutLineId;
+
+    setCartItems((prev) =>
+      prev.filter((i) => !(i.id === id && i.size === size && i.color === color))
+    );
+
+    if (isLoggedIn && lineId) {
+      fetch(`/api/cart?lineId=${encodeURIComponent(lineId)}`, {
+        method: "DELETE",
+      }).catch((err) => console.warn("Backend remove warning:", err));
     }
-
-    const item = cartItems.find((i) => i.id === id && i.size === size && i.color === color);
-    const lineId = item?.checkoutLineId;
-    if (!lineId) return;
-
-    fetch(`/api/cart?lineId=${encodeURIComponent(lineId)}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.items) {
-          setCartItems(data.items);
-          setAppliedCoupon(data.appliedCoupon || null);
-          setDiscountAmount(data.discountAmount || 0);
-          setBackendSubtotal(data.subtotal || 0);
-          setBackendShippingCost(data.shippingCost || 0);
-          setBackendTotalPrice(data.totalAmount || 0);
-        }
-      })
-      .catch((err) => console.error("Remove from cart failed:", err));
   };
 
   const updateQuantity = (id: string, size: string, color: string, quantity: number) => {
@@ -298,35 +335,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!isLoggedIn) {
-      setCartItems((prev) =>
-        prev.map((i) =>
-          i.id === id && i.size === size && i.color === color ? { ...i, quantity } : i
-        )
-      );
-      return;
+    const itemToUpdate = cartItems.find((i) => i.id === id && i.size === size && i.color === color);
+    const lineId = itemToUpdate?.checkoutLineId;
+
+    setCartItems((prev) =>
+      prev.map((i) =>
+        i.id === id && i.size === size && i.color === color
+          ? { ...i, quantity }
+          : i
+      )
+    );
+
+    if (isLoggedIn && lineId) {
+      fetch("/api/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variantId: id, lineId, quantity }),
+      }).catch((err) => console.warn("Backend update quantity warning:", err));
     }
-
-    const item = cartItems.find((i) => i.id === id);
-    const lineId = item?.checkoutLineId;
-
-    fetch("/api/cart", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ variantId: id, lineId, quantity }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.items) {
-          setCartItems(data.items);
-          setAppliedCoupon(data.appliedCoupon || null);
-          setDiscountAmount(data.discountAmount || 0);
-          setBackendSubtotal(data.subtotal || 0);
-          setBackendShippingCost(data.shippingCost || 0);
-          setBackendTotalPrice(data.totalAmount || 0);
-        }
-      })
-      .catch((err) => console.error("Update quantity failed:", err));
   };
 
   const clearCart = () => {
@@ -567,8 +593,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const subtotal = isLoggedIn ? backendSubtotal : cartItems.reduce((acc, item) => acc + item.numericPrice * item.quantity, 0);
-  const shippingCost = isLoggedIn ? backendShippingCost : (cartItems.length > 0 ? (appliedCoupon === "FREESHIP" ? 0 : 15.21) : 0);
+
+  // Helper to extract reliable numeric price from any item (numericPrice or string price)
+  const getNumericPrice = (item: CartItem): number => {
+    if (typeof item.numericPrice === "number" && !isNaN(item.numericPrice) && item.numericPrice > 0) {
+      return item.numericPrice;
+    }
+    if (typeof item.price === "string") {
+      const clean = item.price.replace(/[^0-9.]/g, "");
+      const parsed = parseFloat(clean);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return 0;
+  };
+
+  const computedSubtotal = cartItems.reduce((acc, item) => acc + getNumericPrice(item) * (item.quantity || 1), 0);
+  const subtotal = isLoggedIn && backendSubtotal > 0 ? backendSubtotal : computedSubtotal;
+  const shippingCost = isLoggedIn && backendShippingCost > 0 ? backendShippingCost : 0;
 
   return (
     <CartContext.Provider
@@ -599,6 +640,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         user,
         login,
         logout,
+        updateUserProfile,
         isLoginModalOpen,
         setLoginModalOpen,
       }}

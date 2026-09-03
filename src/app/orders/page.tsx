@@ -61,15 +61,21 @@ export default function MyOrdersPage() {
               actionText = "Contact Support";
             }
 
-            const items = (order.lines || []).map((line: any): OrderItem => ({
-              name: line.productName || "Product Item",
-              price: `$${(line.unitPrice?.gross?.amount || 0).toFixed(2)}`,
-              image: line.thumbnail?.url || "/images/placeholder.png",
-              size: line.variantName || "Standard",
-              quantity: line.quantity || 1
-            }));
+            const items = (order.lines || []).map((line: any): OrderItem => {
+              let imgUrl = line.thumbnail?.url || "";
+              if (imgUrl) {
+                imgUrl = imgUrl.replace(/^https?:\/\/[^\/]+\/media\//, "https://aquacare.udayamarketing.in/media/");
+              }
+              return {
+                name: line.productName || "Product Item",
+                price: `\u20b9${(line.unitPrice?.gross?.amount || 0).toFixed(0)}`,
+                image: imgUrl || "/images/placeholder.png",
+                size: line.variantName || "Standard",
+                quantity: line.quantity || 1
+              };
+            });
 
-            const total = `$${(order.total?.gross?.amount || 0).toFixed(2)}`;
+            const total = `\u20b9${(order.total?.gross?.amount || 0).toFixed(0)}`;
 
             return {
               id: order.id,
@@ -180,6 +186,7 @@ export default function MyOrdersPage() {
                             width={50}
                             height={50}
                             className={styles.itemImage}
+                            unoptimized
                           />
                         ) : (
                           <div

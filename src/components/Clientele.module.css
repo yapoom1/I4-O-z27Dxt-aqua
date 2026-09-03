@@ -1,0 +1,84 @@
+.section {
+  width: 100%;
+  padding: 24px 24px 36px 24px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: 32px 32px 48px 32px;
+  }
+}
+
+.headingWrapper {
+  margin-bottom: 24px;
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .heading {
+    font-size: 26px;
+  }
+}
+
+.headingHighlight {
+  color: var(--accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+}
+
+.logoCard {
+  background-color: var(--card-bg);
+  border-radius: 18px;
+  padding: 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  border: 1px solid rgba(var(--black-rgb), 0.05);
+  aspect-ratio: 4/3;
+}
+
+.logoCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(var(--accent-rgb), 0.08);
+  border-color: var(--accent);
+}
+
+.logoText {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 13px;
+  letter-spacing: -0.2px;
+  text-align: center;
+}

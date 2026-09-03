@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { ShoppingBag, Bell, Search, X, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, ArrowDown10, ArrowUp10, Check } from "lucide-react";
+import { ShoppingBag, User, Search, X, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, ArrowDown10, ArrowUp10, Check } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import styles from "./Header.module.css";
 
@@ -125,17 +125,22 @@ export default function Header() {
   return (
     <div className={styles.headerWrapper}>
       <header className={styles.header}>
-        {/* Logo Icon Left */}
-        <div className={styles.logoContainer} onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
-          <Image
-            src="/logo/logo.png"
-            alt="Brand Logo"
-            width={36}
-            height={36}
-            className={styles.logo}
-            priority
-            style={{ objectFit: "contain" }}
-          />
+        {/* Logo & Brand Name Left */}
+        <div className={styles.brandWrapper} onClick={() => router.push("/")}>
+          <div className={styles.logoContainer}>
+            <Image
+              src="/logo/logo.png"
+              alt="AquaCare Logo"
+              width={34}
+              height={34}
+              className={styles.logo}
+              priority
+              style={{ objectFit: "contain" }}
+            />
+          </div>
+          <span className={styles.brandTitle}>
+            Aqua<span className={styles.brandTitleAccent}>Care</span>
+          </span>
         </div>
 
         {/* Header Actions Buttons Right */}
@@ -151,10 +156,19 @@ export default function Header() {
             {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
           </button>
 
-          {/* Notification Icon Button */}
-          <button className={styles.iconButton} aria-label="Notifications">
-            <Bell size={20} strokeWidth={1.8} className={styles.icon} />
-            <span className={styles.notificationBadge} />
+          {/* Profile / Account Icon Button */}
+          <button 
+            className={styles.iconButton} 
+            aria-label="My Account / Profile"
+            onClick={() => {
+              if (isLoggedIn) {
+                router.push("/profile");
+              } else {
+                setLoginModalOpen(true);
+              }
+            }}
+          >
+            <User size={20} strokeWidth={1.8} className={styles.icon} />
           </button>
         </div>
       </header>

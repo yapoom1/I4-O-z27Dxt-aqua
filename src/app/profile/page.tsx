@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import MobileContainer from "@/components/MobileContainer";
@@ -8,7 +8,6 @@ import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/context/CartContext";
 import {
   ChevronLeft,
-  Bell,
   ChevronRight,
   ShoppingBag,
   MapPin,
@@ -17,6 +16,9 @@ import {
   Settings,
   LogOut,
   User,
+  Edit2,
+  Check,
+  X,
 } from "lucide-react";
 import styles from "./page.module.css";
 
@@ -30,7 +32,36 @@ interface MenuItem {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { isLoggedIn, user, logout, setLoginModalOpen } = useCart();
+  const { isLoggedIn, user, logout, updateUserProfile, setLoginModalOpen } = useCart();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleStartEdit = () => {
+    setNameInput(user?.name || "");
+    setEmailInput(user?.email || "");
+    setIsEditing(true);
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nameInput.trim()) {
+      alert("Name cannot be empty.");
+      return;
+    }
+
+    setIsSaving(true);
+    const success = await updateUserProfile(nameInput.trim(), emailInput.trim(), user?.phone);
+    setIsSaving(false);
+
+    if (success) {
+      setIsEditing(false);
+    } else {
+      alert("Failed to update profile name. Please try again.");
+    }
+  };
 
   const menuItems: MenuItem[] = [
     {
@@ -42,11 +73,6 @@ export default function ProfilePage() {
       id: "shipping",
       label: "Shipping Addresses",
       icon: <MapPin size={20} strokeWidth={1.8} />,
-    },
-    {
-      id: "payment",
-      label: "Payment Methods",
-      icon: <CreditCard size={20} strokeWidth={1.8} />,
     },
     {
       id: "promos",
@@ -79,9 +105,7 @@ export default function ProfilePage() {
           <ChevronLeft size={22} strokeWidth={1.8} className={styles.icon} />
         </button>
         <h2 className={styles.title}>My Profile</h2>
-        <button className={styles.iconButton} aria-label="Notifications">
-          <Bell size={22} strokeWidth={1.8} className={styles.icon} />
-        </button>
+        <div style={{ width: 42 }} />
       </header>
 
       <main className={styles.mainContent}>
@@ -112,17 +136,74 @@ export default function ProfilePage() {
               <div className={styles.userCard}>
                 <div className={styles.avatarContainer}>
                   <Image
-                    src={user.avatar}
+                    src={user.avatar || "/images/profile.png"}
                     alt={`${user.name} Profile`}
                     width={96}
                     height={96}
                     className={styles.avatar}
                     priority
+                    unoptimized
                   />
                 </div>
-                <h3 className={styles.userName}>{user.name}</h3>
-                <p className={styles.userEmail}>{user.email}</p>
-                <p className={styles.userPhone}>{user.phone}</p>
+
+                {!isEditing ? (
+                  <>
+                    <div className={styles.nameHeaderRow}>
+                      <h3 className={styles.userName}>{user.name}</h3>
+                      <button
+                        onClick={handleStartEdit}
+                        className={styles.editNameBtn}
+                        aria-label="Edit Profile Name"
+                        title="Edit Name & Email"
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                    </div>
+                    <p className={styles.userEmail}>{user.email || "No email provided"}</p>
+                    <p className={styles.userPhone}>{user.phone}</p>
+                  </>
+                ) : (
+                  <form onSubmit={handleSaveProfile} className={styles.editProfileForm}>
+                    <div className={styles.editField}>
+                      <label className={styles.editLabel}>Full Name</label>
+                      <input
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        className={styles.editInput}
+                        placeholder="Enter your full name"
+                        autoFocus
+                      />
+                    </div>
+                    <div className={styles.editField}>
+                      <label className={styles.editLabel}>Email Address</label>
+                      <input
+                        type="email"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        className={styles.editInput}
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                    <div className={styles.editActionRow}>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                        className={styles.cancelEditBtn}
+                        disabled={isSaving}
+                      >
+                        <X size={14} /> Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className={styles.saveEditBtn}
+                        disabled={isSaving}
+                      >
+                        <Check size={14} /> {isSaving ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
 
               {/* Statistics */}
@@ -155,7 +236,9 @@ export default function ProfilePage() {
                       } else if (item.id === "shipping") {
                         router.push("/addresses");
                       } else if (item.id === "promos") {
-                        alert("Your active promo code is: SAVE10");
+                        router.push("/coupons");
+                      } else if (item.id === "settings") {
+                        handleStartEdit();
                       } else if (item.id === "logout") {
                         logout();
                       }

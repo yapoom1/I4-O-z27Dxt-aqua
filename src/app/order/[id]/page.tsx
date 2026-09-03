@@ -80,6 +80,19 @@ export default function OrderDetailsPage({ params }: PageProps) {
           const shippingVal = isFreeShipping ? 0 : 5;
           const subtotalVal = Math.max(0, totalVal - shippingVal);
 
+          // Payment Method Detection
+          const rawGateway = rawOrder.payments?.[0]?.gateway || "";
+          const isCod = rawGateway.includes("dummy") || rawGateway.includes("cod") || rawGateway === "";
+          const payment = isCod
+            ? {
+                type: "Cash on Delivery",
+                cardNo: "Pay at Doorstep upon Delivery & Installation"
+              }
+            : {
+                type: "Online Payment (Razorpay)",
+                cardNo: "UPI / PhonePe / GPay / Cards"
+              };
+
           // Steps Mapping
           const isCancelled = rawOrder.status === "CANCELED";
           const isFulfilled = rawOrder.status === "FULFILLED";
@@ -89,43 +102,46 @@ export default function OrderDetailsPage({ params }: PageProps) {
             { title: "Cancelled", time: "Processing Cancel", completed: true, active: true }
           ] : [
             { title: "Order Placed", time: dateStr + ", " + timeStr, completed: true },
-            { title: "Payment Confirmed", time: dateStr + ", " + timeStr, completed: true },
-            { title: "Processed & Packed", completed: isFulfilled || !isCancelled },
-            { title: "In Transit", completed: isFulfilled, active: !isFulfilled },
-            { title: "Delivered", completed: isFulfilled, active: isFulfilled }
+            { title: isCod ? "COD Order Confirmed" : "Online Payment Verified", time: dateStr + ", " + timeStr, completed: true },
+            { title: "Technician & RO Purifier Assigned", completed: isFulfilled || !isCancelled },
+            { title: "Out for Delivery & Installation", completed: isFulfilled, active: !isFulfilled },
+            { title: isCod ? "Delivered & Payment Collected" : "Delivered & Installed", completed: isFulfilled, active: isFulfilled }
           ];
 
           // Address Mapping
-          const addr = rawOrder.shippingAddress || {};
+          const addr = rawOrder.shippingAddress || rawOrder.billingAddress || {};
           const address = {
-            name: `${addr.firstName || "Guest"} ${addr.lastName || "Customer"}`,
-            street: addr.streetAddress1 || "No street address provided",
-            cityState: `${addr.city || ""}, ${addr.postalCode || ""}, ${addr.country?.code || ""}`,
-            phone: addr.phone || "N/A"
+            name: [addr.firstName, addr.lastName].filter(Boolean).join(" ") || "Valued Customer",
+            street: addr.streetAddress1 || "Main Road",
+            cityState: [addr.city, addr.countryArea || addr.state, addr.postalCode].filter(Boolean).join(", ") || "Chennai, Tamil Nadu, 600001",
+            phone: addr.phone || "+91 98765 43210"
           };
 
           // Items Mapping
-          const items = (rawOrder.lines || []).map((line: any): OrderItem => ({
-            name: line.productName || "Product Item",
-            price: `$${(line.unitPrice?.gross?.amount || 0).toFixed(2)}`,
-            image: line.thumbnail?.url || "/images/placeholder.png",
-            size: line.variantName || "Standard",
-            quantity: line.quantity || 1
-          }));
+          const items = (rawOrder.lines || []).map((line: any): OrderItem => {
+            let imgUrl = line.thumbnail?.url || "";
+            if (imgUrl) {
+              imgUrl = imgUrl.replace(/^https?:\/\/[^\/]+\/media\//, "https://aquacare.udayamarketing.in/media/");
+            }
+            return {
+              name: line.productName || "Product Item",
+              price: `\u20b9${(line.unitPrice?.gross?.amount || 0).toFixed(0)}`,
+              image: imgUrl || "/images/product-blue.png",
+              size: line.variantName || "Standard",
+              quantity: line.quantity || 1
+            };
+          });
 
           setOrder({
             id: rawOrder.id,
             date: dateStr,
             time: timeStr,
             status: rawOrder.status,
-            subtotal: `$${subtotalVal.toFixed(2)}`,
-            shipping: isFreeShipping ? "Free" : `$${shippingVal.toFixed(2)}`,
-            total: `$${totalVal.toFixed(2)}`,
+            subtotal: `\u20b9${subtotalVal.toFixed(0)}`,
+            shipping: isFreeShipping ? "Free" : `\u20b9${shippingVal.toFixed(0)}`,
+            total: `\u20b9${totalVal.toFixed(0)}`,
             address,
-            payment: {
-              type: "Razorpay Secure",
-              cardNo: "Net Banking / Wallet"
-            },
+            payment,
             steps,
             items
           });
@@ -266,6 +282,7 @@ export default function OrderDetailsPage({ params }: PageProps) {
                           width={50}
                           height={50}
                           className={styles.itemImage}
+                          unoptimized
                         />
                       ) : (
                         <div
