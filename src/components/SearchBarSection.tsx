@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, ArrowDown10, ArrowUp10, ArrowDownAZ, ArrowUpZA, Check } from "lucide-react";
 import styles from "./SearchBarSection.module.css";
 
@@ -15,6 +16,7 @@ const SORT_OPTIONS: { id: SortOption; label: string; icon: React.ComponentType<{
 ];
 
 export default function SearchBarSection() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("default");
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -82,6 +84,16 @@ export default function SearchBarSection() {
     updateSearchURL(searchQuery, sort);
   };
 
+  const handleSearchClick = () => {
+    router.push(searchQuery ? `/products?q=${encodeURIComponent(searchQuery)}` : "/products");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearchClick();
+    }
+  };
+
   return (
     <div className={styles.searchSection}>
       {/* Title with Inline Sparkle */}
@@ -111,14 +123,22 @@ export default function SearchBarSection() {
 
       {/* Lengthy Pill Search Field */}
       <div className={styles.searchBarContainer}>
-        <div className={styles.inputWrapper}>
+        <div 
+          className={styles.inputWrapper} 
+          onClick={handleSearchClick}
+          style={{ cursor: "pointer" }}
+        >
           <Search size={20} className={styles.searchIcon} />
           <input
             type="text"
             placeholder="Search purifiers..."
             value={searchQuery}
             onChange={(e) => handleInputChange(e.target.value)}
+            onFocus={handleSearchClick}
+            onClick={handleSearchClick}
+            onKeyDown={handleKeyDown}
             className={styles.inputField}
+            style={{ cursor: "pointer" }}
           />
         </div>
 

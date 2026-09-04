@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Star, Plus, Minus } from "lucide-react";
+import { Star, Plus, Minus, Eye } from "lucide-react";
 import FavoriteButton from "./FavoriteButton";
 import DetailsAddToCart from "./DetailsAddToCart";
 import { Product, ProductVariant } from "@/data/products";
@@ -30,11 +30,24 @@ export default function ProductInteractiveSection({ product }: ProductInteractiv
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [displayPrice, setDisplayPrice] = useState<string>(product.price);
+  const [viewsCount, setViewsCount] = useState<number>(product.views || 0);
+
+  // Increment views on mount
+  useEffect(() => {
+    if (!product.id) return;
+    fetch(`/api/views/${encodeURIComponent(product.id)}`, { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.views === "number") {
+          setViewsCount(data.views);
+        }
+      })
+      .catch((err) => console.error("Failed to increment views:", err));
+  }, [product.id]);
 
   // Initialize selected options based on variants
   useEffect(() => {
     if (product.variants && product.variants.length > 0) {
-      // Find the first variant that has sizes or colors
       const firstVariant = product.variants[0];
       setSelectedVariant(firstVariant);
       setDisplayPrice(firstVariant.price);
@@ -42,7 +55,6 @@ export default function ProductInteractiveSection({ product }: ProductInteractiv
         setActiveImage(firstVariant.image);
       }
 
-      // Collect initial size/color from the first variant
       const initialSize = firstVariant.sizes[0] || product.sizes[0] || "";
       const initialColor = firstVariant.colors[0] || product.colors[0] || "";
       setSelectedSize(initialSize);
@@ -57,86 +69,87 @@ export default function ProductInteractiveSection({ product }: ProductInteractiv
   useEffect(() => {
     if (!product.variants || product.variants.length === 0) return;
 
-    // Attempt to match size AND color
-    let match = product.variants.find((v) => {
-      const matchesSize = selectedSize ? v.sizes.includes(selectedSize) : true;
-      const matchesColor = selectedColor ? v.colors.includes(selectedColor) : true;
-      return matchesSize && matchesColor;
+    const matched = product.variants.find((v) => {
+      const matchSize = !selectedSize || v.sizes.includes(selectedSize);
+      const matchColor = !selectedColor || v.colors.includes(selectedColor);
+      return matchSize && matchColor;
     });
 
-    // Fallback 1: match size only
-    if (!match && selectedSize) {
-      match = product.variants.find((v) => v.sizes.includes(selectedSize));
-    }
-
-    // Fallback 2: match color only
-    if (!match && selectedColor) {
-      match = product.variants.find((v) => v.colors.includes(selectedColor));
-    }
-
-    if (match) {
-      setSelectedVariant(match);
-      setDisplayPrice(match.price);
-      if (match.image) {
-        setActiveImage(match.image);
+    if (matched) {
+      setSelectedVariant(matched);
+      setDisplayPrice(matched.price);
+      if (matched.image) {
+        setActiveImage(matched.image);
       }
     }
   }, [selectedSize, selectedColor, product.variants]);
+
+  const handleSizeSelect = (size: string) => {
+    setSelectedSize(size);
+  };
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+  };
 
   const fullStarsCount = Math.floor(product.rating);
 
   return (
     <main className={layoutStyles.mainContent}>
-      {/* Left Column - Product Image & Gallery */}
+      {/* Left Column - Image Gallery */}
       <div className={layoutStyles.imageBlock}>
         <div className={layoutStyles.imageCard}>
-          {activeImage ? (
-            <Image
-              src={activeImage}
-              alt={product.name}
-              width={400}
-              height={420}
-              className={layoutStyles.productImage}
-              style={{
-                viewTransitionName: `product-image-${product.id}`,
-              } as React.CSSProperties}
-              priority
-            />
-          ) : (
+          <Image
+            src={activeImage}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className={styles.mainImage}
+            priority
+          />
+          <div className={styles.favoriteButtonOverlay}>
+            <FavoriteButton productId={product.id} />
+          </div>
+          {viewsCount > 0 && (
             <div style={{
-              width: "100%",
-              height: "100%",
-              backgroundColor: "var(--input-bg)",
+              position: "absolute",
+              bottom: "16px",
+              left: "16px",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              backdropFilter: "blur(6px)",
+              padding: "4px 10px",
+              borderRadius: "20px",
               display: "flex",
-              justifyContent: "center",
               alignItems: "center",
-              fontSize: "96px",
-              fontWeight: 700,
-              color: "var(--text-secondary)",
-              userSelect: "none"
-            }}>!</div>
+              gap: "5px",
+              fontSize: "12px",
+              fontWeight: 600,
+              color: "#333",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              zIndex: 5,
+            }}>
+              <Eye size={14} color="#0071e3" />
+              <span>{viewsCount.toLocaleString()} views</span>
+            </div>
           )}
-          {product.limited && (
-            <span className={layoutStyles.limitedBadge}>LIMITED</span>
-          )}
-          <FavoriteButton productId={product.id} />
         </div>
 
-        {/* Thumbnail Image Gallery */}
+        {/* Thumbnails list */}
         {product.images && product.images.length > 1 && (
           <div className={styles.gallery}>
-            {product.images.map((imgUrl, index) => {
-              const isActive = activeImage === imgUrl;
+            {product.images.map((img, index) => {
+              const isSelected = activeImage === img;
               return (
                 <button
                   key={index}
                   type="button"
-                  onClick={() => setActiveImage(imgUrl)}
-                  className={`${styles.thumbnailWrapper} ${isActive ? styles.activeThumbnail : ""}`}
-                  aria-label={`View image ${index + 1}`}
+                  className={`${styles.thumbnailWrapper} ${
+                    isSelected ? styles.activeThumbnail : ""
+                  }`}
+                  onClick={() => setActiveImage(img)}
                 >
                   <Image
-                    src={imgUrl}
+                    src={img}
                     alt={`${product.name} gallery image ${index + 1}`}
                     width={70}
                     height={70}
@@ -163,33 +176,66 @@ export default function ProductInteractiveSection({ product }: ProductInteractiv
               </span>
             )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-            {product.originalPrice && (
-              <span style={{ fontSize: "15px", color: "var(--text-secondary)", textDecoration: "line-through", opacity: 0.75 }}>
-                {product.originalPrice}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+              {product.originalPrice && (
+                <span style={{ fontSize: "15px", color: "var(--text-secondary)", textDecoration: "line-through", opacity: 0.75 }}>
+                  {product.originalPrice}
+                </span>
+              )}
+              <span className={layoutStyles.price} style={{ color: "#ff3b30" }}>{displayPrice}</span>
+            </div>
+            {product.discountPercent && product.discountPercent > 0 && (
+              <span style={{
+                backgroundColor: "rgba(52, 199, 89, 0.12)",
+                color: "#248a3d",
+                fontSize: "12px",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "12px",
+                letterSpacing: "0.2px"
+              }}>
+                {product.discountPercent}% OFF (MRP)
               </span>
             )}
-            <span className={layoutStyles.price} style={{ color: "#ff3b30" }}>{displayPrice}</span>
           </div>
         </div>
 
         <p className={layoutStyles.description}>{product.description}</p>
 
-        <div className={layoutStyles.ratingRow}>
-          <div className={layoutStyles.stars}>
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={15}
-                fill={i < fullStarsCount ? "#ffcc00" : "none"}
-                stroke={i < fullStarsCount ? "#ffcc00" : "#d1d1d6"}
-                strokeWidth={2.5}
-              />
-            ))}
+        <div className={layoutStyles.ratingRow} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div className={layoutStyles.stars}>
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  size={15}
+                  fill={i < fullStarsCount ? "#ffcc00" : "none"}
+                  stroke={i < fullStarsCount ? "#ffcc00" : "#d1d1d6"}
+                  strokeWidth={2.5}
+                />
+              ))}
+            </div>
+            <span className={layoutStyles.ratingText}>
+              {product.rating} ({product.reviewsCount} reviews)
+            </span>
           </div>
-          <span className={layoutStyles.ratingText}>
-            {product.rating} ({product.reviewsCount} reviews)
-          </span>
+          {viewsCount > 0 && (
+            <span style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "13px",
+              color: "var(--text-secondary)",
+              fontWeight: 500,
+              backgroundColor: "rgba(0, 113, 227, 0.08)",
+              padding: "3px 10px",
+              borderRadius: "14px",
+            }}>
+              <Eye size={14} color="#0071e3" />
+              <span>{viewsCount.toLocaleString()} views</span>
+            </span>
+          )}
         </div>
 
         {/* Product Key Specifications */}

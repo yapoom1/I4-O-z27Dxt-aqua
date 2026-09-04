@@ -9,11 +9,7 @@ const nextConfig: NextConfig = {
         hostname: "aquacare.udayamarketing.in",
         pathname: "/**",
       },
-      {
-        protocol: "https",
-        hostname: "sriaachicreatives.udayamarketing.in",
-        pathname: "/**",
-      },
+
       {
         protocol: "https",
         hostname: "**.udayamarketing.in",

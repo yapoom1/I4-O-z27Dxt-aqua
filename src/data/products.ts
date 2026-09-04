@@ -16,6 +16,9 @@ export interface Product {
   price: string;
   numericPrice: number;
   originalPrice?: string;
+  mrp?: string;
+  discountPercent?: number;
+  views?: number;
   image: string;
   isLiked?: boolean;
   rating: number;

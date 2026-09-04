@@ -4,22 +4,235 @@
   width: 100%;
 }
 
-.searchBarContainer {
+/* Category Section - Exact Clientele Design Structure */
+.categorySection {
   width: 100%;
+  padding: 24px 24px 36px 24px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
+@media (min-width: 768px) {
+  .categorySection {
+    padding: 32px 32px 48px 32px;
+  }
+}
+
+.headingWrapper {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+  margin: 0 0 6px 0;
+}
+
+@media (min-width: 768px) {
+  .heading {
+    font-size: 26px;
+  }
+}
+
+.headingHighlight {
+  color: var(--accent);
+}
+
+.subheading {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Exact Clientele Grid (2 cols mobile, 3 cols tablet, 6 cols desktop) */
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .categoryGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .categoryGrid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Exact Clientele Card Style (aspect-ratio: 4/3, card-bg, rounded 18px) */
+.categoryCard {
+  background-color: var(--card-bg);
+  border-radius: 18px;
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  border: 1px solid rgba(var(--black-rgb), 0.06);
+  aspect-ratio: 4 / 3;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  position: relative;
+  outline: none;
+}
+
+.categoryCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(var(--accent-rgb), 0.12);
+  border-color: var(--accent);
+}
+
+.categoryCardActive {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent), 0 8px 20px rgba(65, 105, 225, 0.18) !important;
+  transform: translateY(-2px);
+  background-color: #ffffff !important;
+}
+
+.cardEmoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.cardTitle {
+  font-weight: 750;
+  color: var(--text-primary);
+  font-size: 13px;
+  letter-spacing: -0.2px;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.categoryCardActive .cardTitle {
+  color: var(--accent);
+}
+
+.cardCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.categoryCardActive .cardCount {
+  color: var(--accent);
+}
+
+/* Category Filter Pills (Sticky above product grid) */
+.pillsContainer {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 24px 16px 24px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .pillsContainer {
+    padding: 8px 32px 18px 32px;
+    gap: 10px;
+  }
+}
+
+.pillsContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.pillBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.pillBtn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.pillBtnActive {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 12px rgba(65, 105, 225, 0.3) !important;
+}
+
+.pillCount {
+  font-size: 10.5px;
+  opacity: 0.85;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.pillBtnActive .pillCount {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Filter Status Bar */
 .filterStatus {
-  padding: 0 24px 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px 14px 24px;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
 @media (min-width: 768px) {
   .filterStatus {
-    padding: 0 32px 14px 32px;
+    padding: 0 32px 16px 32px;
   }
 }
 
+.clearFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.clearFilterBtn:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Product Grid */
 .gridContainer {
   padding: 0 24px 110px 24px;
   background-color: var(--background);
@@ -51,6 +264,7 @@
   }
 }
 
+/* Empty State */
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -67,7 +281,8 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background-color: var(--input-bg);
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   margin-bottom: 16px;
 }
 
@@ -99,14 +314,9 @@
   font-weight: 600;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .resetSearchBtn:hover {
-  transform: scale(1.03);
-  opacity: 0.95;
-}
-
-.resetSearchBtn:active {
-  transform: scale(0.97);
+  opacity: 0.9;
 }

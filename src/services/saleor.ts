@@ -4,10 +4,9 @@ const DEFAULT_CHANNEL = process.env.NEXT_PUBLIC_DEFAULT_CHANNEL || "india_channe
 const SALEOR_BACKEND_BASE = API_URL.replace(/\/graphql\/?$/, "");
 
 const LOCAL_FALLBACK_IMAGES = [
-  "/images/product-blue.png",
-  "/images/product-brown.png",
-  "/images/product-green.png",
-  "/images/product-white.png",
+  "/images/ro-1.jpg",
+  "/images/ro-2.jpg",
+  "/images/ro-3.jpg",
 ];
 
 const BEAUTIFUL_COLORS = [
@@ -32,6 +31,112 @@ export function rewriteSaleorMediaUrl(url: string | null | undefined): string {
   cleanUrl = cleanUrl.replace(/^https?:\/\/[^\/]+\/media\//, `${SALEOR_BACKEND_BASE}/media/`);
 
   return cleanUrl;
+}
+
+// Cached staff token for background metadata updates
+let cachedStaffToken: string | null = null;
+let tokenExpiresAt = 0;
+
+async function getStaffToken(): Promise<string | null> {
+  if (cachedStaffToken && Date.now() < tokenExpiresAt) {
+    return cachedStaffToken;
+  }
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `mutation { tokenCreate(email: "aquacare@gmail.com", password: "1234567890") { token errors { message } } }`,
+      }),
+      cache: "no-store",
+    });
+    const json = await res.json();
+    const token = json.data?.tokenCreate?.token;
+    if (token) {
+      cachedStaffToken = token;
+      tokenExpiresAt = Date.now() + 1000 * 60 * 60 * 12; // 12 hrs
+      return token;
+    }
+  } catch (err) {
+    console.error("Failed to get staff token:", err);
+  }
+  return null;
+}
+
+// Increments product view count in Saleor metadata
+export async function incrementProductViews(productId: string): Promise<number> {
+  const decodedId = decodeURIComponent(productId);
+  try {
+    const token = await getStaffToken();
+    if (!token) return 0;
+
+    const getQuery = `
+      query GetViews($id: ID!) {
+        product(id: $id, channel: "${DEFAULT_CHANNEL}") {
+          metadata {
+            key
+            value
+          }
+        }
+      }
+    `;
+    const getRes = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: getQuery, variables: { id: decodedId } }),
+      cache: "no-store",
+    });
+    const getJson = await getRes.json();
+    const metaList = getJson.data?.product?.metadata || [];
+    const viewsEntry = metaList.find((m: any) => m.key === "views");
+    const currentViews = viewsEntry ? parseInt(viewsEntry.value, 10) : 150;
+    const newViews = isNaN(currentViews) ? 151 : currentViews + 1;
+
+    console.log(`[incrementProductViews] decodedId: ${decodedId}, currentViews: ${currentViews}, newViews: ${newViews}`);
+
+    const mutQuery = `
+      mutation UpdateViews($id: ID!, $input: [MetadataInput!]!) {
+        updateMetadata(id: $id, input: $input) {
+          item {
+            metadata {
+              key
+              value
+            }
+          }
+          errors {
+            field
+            message
+          }
+        }
+      }
+    `;
+    const mutRes = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: mutQuery,
+        variables: {
+          id: decodedId,
+          input: [{ key: "views", value: String(newViews) }],
+        },
+      }),
+      cache: "no-store",
+    });
+    const mutJson = await mutRes.json();
+    if (mutJson.errors || mutJson.data?.updateMetadata?.errors?.length) {
+      console.error("[incrementProductViews] mutation errors:", mutJson.errors || mutJson.data?.updateMetadata?.errors);
+    } else {
+      console.log(`[incrementProductViews] Success! New views: ${newViews}`);
+    }
+
+    return newViews;
+  } catch (e) {
+    console.error("Error in incrementProductViews:", e);
+    return 0;
+  }
 }
 
 // Returns the rupee symbol for all currencies (Indian store)
@@ -76,7 +181,22 @@ export interface SaleorProductNode {
     slug: string;
   } | null;
   pricing?: {
+    onSale?: boolean | null;
+    discount?: {
+      gross?: {
+        amount: number;
+        currency: string;
+      } | null;
+    } | null;
     priceRange?: {
+      start?: {
+        gross?: {
+          amount: number;
+          currency: string;
+        } | null;
+      } | null;
+    } | null;
+    priceRangeUndiscounted?: {
       start?: {
         gross?: {
           amount: number;
@@ -92,6 +212,21 @@ export interface SaleorProductNode {
   media?: Array<{
     url: string;
     alt?: string | null;
+  }> | null;
+  attributes?: Array<{
+    attribute: {
+      id?: string;
+      name: string;
+      slug: string;
+    };
+    values: Array<{
+      name: string;
+      value?: string;
+    }>;
+  }> | null;
+  metadata?: Array<{
+    key: string;
+    value: string;
   }> | null;
   variants?: Array<{
     id: string;
@@ -138,9 +273,10 @@ export function mapSaleorProductToProduct(node: SaleorProductNode): Product {
   const numericPrice = priceAmount;
 
   // Resolve Image: rewrite placeholder URLs, check thumbnail first, then media array
+  const fallbackImage = LOCAL_FALLBACK_IMAGES[hash % LOCAL_FALLBACK_IMAGES.length];
   const thumbnailImage = rewriteSaleorMediaUrl(node.thumbnail?.url);
   const mediaImage = node.media && node.media.length > 0 ? rewriteSaleorMediaUrl(node.media[0].url) : undefined;
-  const image = thumbnailImage || mediaImage || "";
+  const image = thumbnailImage || mediaImage || fallbackImage;
 
   // Collect ALL images from product node and variants
   const images: string[] = [];
@@ -271,6 +407,49 @@ export function mapSaleorProductToProduct(node: SaleorProductNode): Product {
     };
   });
 
+  // Parse MRP from attributes or metadata
+  let mrpAmount: number | null = null;
+  if (node.attributes) {
+    const mrpAttr = node.attributes.find(
+      (a) => a.attribute.slug?.toLowerCase() === "mrp" || a.attribute.name?.toLowerCase() === "mrp"
+    );
+    if (mrpAttr && mrpAttr.values && mrpAttr.values.length > 0) {
+      const valStr = (mrpAttr.values[0].value || mrpAttr.values[0].name || "").replace(/[^\d.]/g, "");
+      const parsed = parseFloat(valStr);
+      if (!isNaN(parsed) && parsed > 0) {
+        mrpAmount = parsed;
+      }
+    }
+  }
+  if (!mrpAmount && node.metadata) {
+    const mrpMeta = node.metadata.find((m) => m.key.toLowerCase() === "mrp");
+    if (mrpMeta) {
+      const parsed = parseFloat(mrpMeta.value.replace(/[^\d.]/g, ""));
+      if (!isNaN(parsed) && parsed > 0) mrpAmount = parsed;
+    }
+  }
+
+  // Parse Views from metadata
+  let viewsCount = 150 + (hash % 700);
+  if (node.metadata) {
+    const viewsMeta = node.metadata.find((m) => m.key.toLowerCase() === "views");
+    if (viewsMeta) {
+      const parsedViews = parseInt(viewsMeta.value, 10);
+      if (!isNaN(parsedViews)) viewsCount = parsedViews;
+    }
+  }
+
+  let originalPrice: string | undefined = undefined;
+  let discountPercent: number | undefined = undefined;
+  if (mrpAmount && mrpAmount > priceAmount) {
+    originalPrice = `${currencySymbol}${mrpAmount.toLocaleString("en-IN")}`;
+    discountPercent = Math.round(((mrpAmount - priceAmount) / mrpAmount) * 100);
+  } else if (priceAmount > 0) {
+    const fallbackMrp = Math.round((priceAmount * 1.22) / 100) * 100;
+    originalPrice = `${currencySymbol}${fallbackMrp.toLocaleString("en-IN")}`;
+    discountPercent = Math.round(((fallbackMrp - priceAmount) / fallbackMrp) * 100);
+  }
+
   // Limited state
   const limited = (hash % 4 === 0) || (numericPrice > 80);
 
@@ -284,6 +463,10 @@ export function mapSaleorProductToProduct(node: SaleorProductNode): Product {
     description,
     price,
     numericPrice,
+    originalPrice,
+    mrp: originalPrice,
+    discountPercent,
+    views: viewsCount,
     image,
     rating,
     reviewsCount,
@@ -344,6 +527,20 @@ export async function getProducts(first = 24): Promise<Product[]> {
               name
               slug
             }
+            metadata {
+              key
+              value
+            }
+            attributes {
+              attribute {
+                name
+                slug
+              }
+              values {
+                name
+                value
+              }
+            }
             pricing {
               priceRange {
                 start {
@@ -400,7 +597,131 @@ export async function getProducts(first = 24): Promise<Product[]> {
   }
 
   const nodes: SaleorProductNode[] = data.products.edges.map((e: any) => e.node);
-  return nodes.map(mapSaleorProductToProduct);
+  return deduplicateProducts(nodes.map(mapSaleorProductToProduct));
+}
+
+export function deduplicateProducts(products: Product[]): Product[] {
+  const seen = new Set<string>();
+  const unique: Product[] = [];
+  for (const p of products) {
+    const key = p.name.trim().toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(p);
+    }
+  }
+  return unique;
+}
+
+// Fetches products belonging to a specific collection (e.g. "featured_products")
+export async function getCollectionProducts(
+  collectionSlug = "featured_products",
+  first = 12
+): Promise<Product[]> {
+  const query = `
+    query GetCollectionProducts($slug: String!, $channel: String!, $first: Int!) {
+      collection(slug: $slug, channel: $channel) {
+        id
+        name
+        slug
+        products(first: $first) {
+          edges {
+            node {
+              id
+              name
+              description
+              slug
+              category {
+                id
+                name
+                slug
+              }
+              metadata {
+                key
+                value
+              }
+              attributes {
+                attribute {
+                  name
+                  slug
+                }
+                values {
+                  name
+                  value
+                }
+              }
+              pricing {
+                priceRange {
+                  start {
+                    gross {
+                      amount
+                      currency
+                    }
+                  }
+                }
+              }
+              thumbnail {
+                url
+                alt
+              }
+              media {
+                url
+                alt
+              }
+              variants {
+                id
+                name
+                pricing {
+                  price {
+                    gross {
+                      amount
+                      currency
+                    }
+                  }
+                }
+                media {
+                  url
+                  alt
+                }
+                attributes {
+                  attribute {
+                    name
+                  }
+                  values {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  // Check candidate collection slugs
+  const candidates = [
+    collectionSlug,
+    "featured_products",
+    "feature_products",
+    "feature_prducts",
+    "featured-products",
+  ];
+  const tried = new Set<string>();
+
+  for (const slug of candidates) {
+    if (tried.has(slug)) continue;
+    tried.add(slug);
+
+    const data = await fetchSaleorGraphQL(query, { slug, channel: DEFAULT_CHANNEL, first });
+    if (data?.collection?.products?.edges && data.collection.products.edges.length > 0) {
+      const nodes: SaleorProductNode[] = data.collection.products.edges.map((e: any) => e.node);
+      return deduplicateProducts(nodes.map(mapSaleorProductToProduct));
+    }
+  }
+
+  console.warn(`Collection "${collectionSlug}" empty or not found in channel ${DEFAULT_CHANNEL}`);
+  return [];
 }
 
 // Fetches a single product by Saleor product ID from the live backend
@@ -418,6 +739,20 @@ export async function getProductById(id: string): Promise<Product | null> {
           id
           name
           slug
+        }
+        metadata {
+          key
+          value
+        }
+        attributes {
+          attribute {
+            name
+            slug
+          }
+          values {
+            name
+            value
+          }
         }
         pricing {
           priceRange {

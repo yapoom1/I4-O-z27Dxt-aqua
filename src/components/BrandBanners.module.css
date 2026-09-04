@@ -2,14 +2,15 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   padding: 12px 24px;
   box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
   .sectionContainer {
-    padding: 16px 32px;
+    padding: 18px 32px;
+    gap: 16px;
   }
 }
 
@@ -30,17 +31,19 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.95);
-  color: #000000;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(18, 24, 38, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  z-index: 20;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 25;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   opacity: 0;
   pointer-events: none;
@@ -66,30 +69,32 @@
 }
 
 .navArrow:hover {
-  background-color: #ffffff;
-  transform: translateY(-50%) scale(1.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+  color: #0c1524;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
 .navArrow:active {
-  transform: translateY(-50%) scale(0.96);
+  transform: translateY(-50%) scale(0.95);
 }
 
 /* Horizontal Scroll Track */
 .scrollTrack {
   display: flex;
-  gap: 16px; /* Gap back for side-by-side cards */
+  gap: 18px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   scrollbar-width: none; /* Hide scrollbar Firefox */
   -ms-overflow-style: none; /* Hide scrollbar IE */
   width: 100%;
-  border-radius: 20px;
+  border-radius: 24px;
+  padding: 4px 2px;
 }
 
 .scrollTrack::-webkit-scrollbar {
-  display: none; /* Hide scrollbar Chrome/Safari */
+  display: none;
 }
 
 /* Responsive snaps - 1 on mobile, 2 on desktop */
@@ -98,46 +103,65 @@
   flex: 0 0 100%;
   min-width: 100%;
   box-sizing: border-box;
-  border-radius: 20px;
-  padding: 20px 24px;
+  border-radius: 24px;
+  padding: 22px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: relative;
   overflow: hidden;
-  height: 185px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  height: 205px;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.35);
   text-decoration: none;
   color: inherit;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
 .bannerCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.45);
 }
 
 @media (min-width: 768px) {
   .bannerCard {
-    flex: 0 0 calc(50% - 8px);
-    min-width: calc(50% - 8px);
-    height: 220px;
-    padding: 24px 32px;
+    flex: 0 0 calc(50% - 9px);
+    min-width: calc(50% - 9px);
+    height: 235px;
+    padding: 26px 32px;
   }
 }
 
-/* Gradients matching the mockup image */
-.tealGradient {
-  background: linear-gradient(135deg, #062b2e 0%, #004d40 50%, #0a7366 100%);
+/* Background Gradients with Luxury Aesthetic */
+.sapphireTheme {
+  background: linear-gradient(135deg, #05192d 0%, #0a335c 48%, #006eb3 100%);
+  border: 1px solid rgba(0, 198, 255, 0.28);
 }
 
-.blueGradient {
-  background: linear-gradient(135deg, #09173f 0%, #0a2569 50%, #0060df 100%);
+.emeraldTheme {
+  background: linear-gradient(135deg, #04241d 0%, #09473b 50%, #0b7c64 100%);
+  border: 1px solid rgba(0, 230, 153, 0.28);
 }
 
-.darkGradient {
-  background: linear-gradient(135deg, #0c0c0e 0%, #18181a 50%, #2c2c2e 100%);
+.amberTheme {
+  background: linear-gradient(135deg, #1c1203 0%, #3a2505 50%, #7d540f 100%);
+  border: 1px solid rgba(255, 193, 7, 0.32);
+}
+
+.violetTheme {
+  background: linear-gradient(135deg, #15092b 0%, #2c1257 50%, #622f9c 100%);
+  border: 1px solid rgba(187, 134, 252, 0.3);
+}
+
+/* Subtle Shimmer Overlay */
+.shimmerOverlay {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* Left Content */
@@ -147,43 +171,73 @@
   justify-content: center;
   z-index: 5;
   color: #ffffff;
-  max-width: 60%;
+  max-width: 62%;
 }
 
 .brandRow {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 
 .brandName {
   font-size: 13px;
   font-weight: 850;
-  letter-spacing: -0.3px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
+  color: #ffffff;
 }
 
 .badge {
-  font-size: 9px;
-  font-weight: 750;
-  padding: 2px 6px;
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  letter-spacing: 0.5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  letter-spacing: 0.6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ffffff;
+}
+
+.sparkleDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #00f2fe;
+  box-shadow: 0 0 6px #00f2fe;
+  display: inline-block;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.3); }
 }
 
 .title {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 19px;
+  font-weight: 850;
   margin: 0 0 6px 0;
   letter-spacing: -0.4px;
-  line-height: 1.2;
+  line-height: 1.25;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
   .title {
-    font-size: 24px;
+    font-size: 22px;
   }
 }
 
@@ -195,25 +249,30 @@
 }
 
 .subtitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 @media (min-width: 768px) {
   .subtitle {
-    font-size: 15px;
+    font-size: 13.5px;
   }
 }
 
 .subtext {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.65);
-  margin: 0 0 12px 0;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 14px 0;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 @media (min-width: 768px) {
@@ -224,31 +283,33 @@
 }
 
 .actionBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   width: fit-content;
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: 20px;
-  background-color: #ffffff;
-  color: #000000;
-  font-size: 11px;
-  font-weight: 750;
+  background: #ffffff;
+  color: #0b1526;
+  font-size: 11.5px;
+  font-weight: 800;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 768px) {
   .actionBtn {
-    font-size: 12px;
-    padding: 8px 16px;
+    font-size: 12.5px;
+    padding: 8px 18px;
   }
 }
 
-.actionBtn:hover {
-  transform: translateX(2px);
-  opacity: 0.95;
+.bannerCard:hover .actionBtn {
+  transform: translateX(4px);
+  background: #f0f7ff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 /* Right Content / Image */
@@ -257,37 +318,37 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 40%;
+  width: 38%;
   height: 100%;
 }
 
 .imageCircle {
   position: relative;
-  width: 115px;
-  height: 115px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.02) 70%, transparent 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.08);
 }
 
 @media (min-width: 768px) {
   .imageCircle {
-    width: 145px;
-    height: 145px;
+    width: 155px;
+    height: 155px;
   }
 }
 
 .productImg {
   object-fit: contain;
-  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.35));
-  transition: transform 0.4s ease;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.45));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bannerCard:hover .productImg {
-  transform: translateY(-4px) scale(1.05);
+  transform: translateY(-6px) scale(1.08);
 }
 
 /* Floating Price Badge style */
@@ -295,36 +356,27 @@
   position: absolute;
   top: 14px;
   right: 14px;
-  background: #ffeb3b; /* vibrant yellow sticker */
-  color: #000000;
-  padding: 4px 10px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffae00 100%);
+  color: #0b1526;
+  padding: 4px 12px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 900;
   letter-spacing: -0.2px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 16px rgba(255, 174, 0, 0.4);
   z-index: 10;
-  animation: pulseGlow 2.5s infinite ease-in-out;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 @media (min-width: 768px) {
   .floatingPriceBadge {
     top: 16px;
     right: 16px;
-    padding: 5px 12px;
-    font-size: 12px;
-  }
-}
-
-@keyframes pulseGlow {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-  50% {
-    transform: scale(1.04);
-    box-shadow: 0 6px 16px rgba(255, 235, 59, 0.4);
+    padding: 6px 14px;
+    font-size: 12.5px;
   }
 }
 
@@ -346,12 +398,12 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .activeDot {
-  width: 16px;
-  border-radius: 3px;
-  opacity: 0.85;
-  background-color: var(--text-primary);
+  width: 22px;
+  border-radius: 4px;
+  opacity: 0.9;
+  background: linear-gradient(90deg, var(--primary-color, #e5a63c), #00c6ff);
 }

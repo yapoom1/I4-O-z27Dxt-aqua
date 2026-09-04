@@ -170,6 +170,34 @@
   color: #ff3b30; /* Set to red like in the mockups */
 }
 
+.discountBadge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 750;
+  color: #15803d;
+  background-color: #dcfce7;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.viewsTag {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 4;
+}
+
 .cartWrapper {
   position: relative;
   width: 32px;

@@ -4,16 +4,17 @@ import SearchBarSection from "@/components/SearchBarSection";
 import ProductCatalog from "@/components/ProductCatalog";
 import BrandBanners from "@/components/BrandBanners";
 import BottomNav from "@/components/BottomNav";
-import { getProducts } from "@/services/saleor";
+import { getProducts, getCollectionProducts } from "@/services/saleor";
 import Image from "next/image";
 import styles from "./page.module.css";
-import Clientele from "@/components/Clientele";
-import VideoTestimonials from "@/components/VideoTestimonials";
-import InstagramFeed from "@/components/InstagramFeed";
+import SocialVideosParallel from "@/components/SocialVideosParallel";
 import Testimonials from "@/components/Testimonials";
 
 export default async function Home() {
-  const products = await getProducts(24);
+  const [products, featuredProducts] = await Promise.all([
+    getProducts(100),
+    getCollectionProducts("featured_products", 8),
+  ]);
 
   return (
     <MobileContainer>
@@ -73,17 +74,11 @@ export default async function Home() {
         <div className={styles.sectionHeadingWrapper}>
           <h2 className={styles.sectionHeading}>Featured Series</h2>
         </div>
-        <BrandBanners />
+        <BrandBanners initialProducts={featuredProducts} />
 
-        {/* Product Grid with Left-Aligned Heading */}
-        <div className={styles.sectionHeadingWrapper}>
-          <h2 className={styles.sectionHeading}>Our Purifiers</h2>
-        </div>
         <ProductCatalog initialProducts={products} />
 
-        <Clientele />
-        <VideoTestimonials />
-        <InstagramFeed />
+        <SocialVideosParallel />
         <Testimonials />
       </main>
       <BottomNav />

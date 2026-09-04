@@ -145,7 +145,6 @@ export default function Header() {
 
         {/* Header Actions Buttons Right */}
         <div className={styles.actionsContainer}>
-
           {/* Cart Icon Button */}
           <button 
             className={styles.iconButton} 

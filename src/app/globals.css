@@ -1,11 +1,11 @@
 :root {
-  --background: #f6f6f8;
+  --background: #d8effc;
   --foreground: #121212;
   --text-primary: #121212;
-  --text-secondary: #7e7e82;
+  --text-secondary: #5a6e7f;
   --card-bg: #ffffff;
-  --banner-bg: linear-gradient(135deg, #eef0f3 0%, #e3e6ea 100%);
-  --input-bg: #f0f1f5;
+  --banner-bg: linear-gradient(135deg, #e6f4fc 0%, #cde8fa 100%);
+  --input-bg: rgba(255, 255, 255, 0.9);
 
   /* Royal Blue Theme Colors */
   --accent: #4169e1;
@@ -50,13 +50,13 @@
 
 /* Forced Theme Attribute Overrides */
 html[data-theme="light"] {
-  --background: #f6f6f8;
+  --background: #d8effc;
   --foreground: #121212;
   --text-primary: #121212;
-  --text-secondary: #7e7e82;
+  --text-secondary: #5a6e7f;
   --card-bg: #ffffff;
-  --banner-bg: linear-gradient(135deg, #eef0f3 0%, #e3e6ea 100%);
-  --input-bg: #f0f1f5;
+  --banner-bg: linear-gradient(135deg, #e6f4fc 0%, #cde8fa 100%);
+  --input-bg: rgba(255, 255, 255, 0.9);
 
   --accent: #4169e1;
   --accent-rgb: 65, 105, 225;

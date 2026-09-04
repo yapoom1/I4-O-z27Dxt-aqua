@@ -14,18 +14,23 @@ export default function ExploreProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Read category from window search parameters client-side
+    // Read category and search query from URL parameters client-side
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const cat = params.get("category");
+      const q = params.get("q");
       if (cat) {
         setSelectedCategory(cat);
       }
+      if (q) {
+        setSearchQuery(q);
+      }
     }
 
-    fetch("/api/products")
+    fetch("/api/products?first=100")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -39,8 +44,36 @@ export default function ExploreProductsPage() {
       });
   }, []);
 
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (val.trim()) {
+        url.searchParams.set("q", val);
+      } else {
+        url.searchParams.delete("q");
+      }
+      window.history.replaceState({}, "", url.toString());
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("q");
+      window.history.replaceState({}, "", url.toString());
+    }
+    searchInputRef.current?.focus();
+  };
+
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      product.name.toLowerCase().includes(q) ||
+      (product.subtitle && product.subtitle.toLowerCase().includes(q)) ||
+      (product.description && product.description.toLowerCase().includes(q));
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -54,12 +87,24 @@ export default function ExploreProductsPage() {
         <div className={styles.searchContainer}>
           <Search size={20} className={styles.searchIcon} strokeWidth={2} />
           <input
+            ref={searchInputRef}
             type="text"
-            placeholder="Search"
+            placeholder="Search purifiers by name or model..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className={styles.searchInput}
+            autoFocus
           />
+          {searchQuery && (
+            <button 
+              type="button" 
+              className={styles.clearBtn} 
+              onClick={handleClearSearch}
+              aria-label="Clear search"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         {/* Active Category Filter Badge */}
@@ -82,7 +127,9 @@ export default function ExploreProductsPage() {
                 onClick={() => {
                   setSelectedCategory(null);
                   if (typeof window !== "undefined") {
-                    window.history.replaceState({}, "", "/products");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("category");
+                    window.history.replaceState({}, "", url.toString());
                   }
                 }} 
                 style={{
@@ -104,6 +151,13 @@ export default function ExploreProductsPage() {
           </div>
         )}
 
+        {/* Results Count when searching */}
+        {!loading && searchQuery.trim() && (
+          <div style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "14px", fontWeight: 500 }}>
+            Found {filteredProducts.length} {filteredProducts.length === 1 ? "purifier" : "purifiers"} matching &quot;{searchQuery}&quot;
+          </div>
+        )}
+
         {/* Loading / Product Grid */}
         {loading ? (
           <div className={styles.loadingState} style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
@@ -113,13 +167,6 @@ export default function ExploreProductsPage() {
           <div className={styles.grid}>
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
-            ))}
-            {/* Visual duplications to match length of layout */}
-            {searchQuery === "" && !selectedCategory && products.slice(3, 4).map((product) => (
-              <ProductCard key={`${product.id}-dup-1`} product={{...product, id: product.id}} />
-            ))}
-            {searchQuery === "" && !selectedCategory && products.slice(3, 4).map((product) => (
-              <ProductCard key={`${product.id}-dup-2`} product={{...product, id: product.id}} />
             ))}
           </div>
         ) : (

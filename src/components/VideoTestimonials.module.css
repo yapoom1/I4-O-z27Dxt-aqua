@@ -2,7 +2,7 @@
   width: 100%;
   padding: 36px 16px 64px 16px;
   box-sizing: border-box;
-  background: var(--bg-primary, #f8fafc);
+  background: transparent;
   position: relative;
   overflow: hidden;
 }

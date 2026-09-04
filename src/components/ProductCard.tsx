@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, ShoppingCart, Plus, Minus } from "lucide-react";
+import { Heart, ShoppingCart, Plus, Minus, Eye } from "lucide-react";
 import styles from "./ProductCard.module.css";
 import { Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
@@ -109,16 +109,27 @@ export default function ProductCard({ product }: ProductCardProps) {
           ) : (
             <div className={styles.imagePlaceholder}>!</div>
           )}
+          {product.views && product.views > 0 ? (
+            <div className={styles.viewsTag}>
+              <Eye size={11} />
+              <span>{product.views}</span>
+            </div>
+          ) : null}
         </div>
         <div className={styles.details}>
           <div className={styles.info}>
             <h3 className={styles.title}>{product.name}</h3>
             <p className={styles.subtitle}>{product.subtitle}</p>
             <div className={styles.priceContainer}>
-              {product.originalPrice && (
-                <span className={styles.originalPrice}>{product.originalPrice}</span>
-              )}
-              <span className={styles.price}>{product.price}</span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
+                <span className={styles.price}>{product.price}</span>
+                {product.originalPrice && product.originalPrice !== product.price && (
+                  <span className={styles.originalPrice}>{product.originalPrice}</span>
+                )}
+                {product.discountPercent && product.discountPercent > 0 && (
+                  <span className={styles.discountBadge}>{product.discountPercent}% OFF</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

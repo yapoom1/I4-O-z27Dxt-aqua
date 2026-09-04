@@ -1,0 +1,383 @@
+.section {
+  width: 100%;
+  padding: 36px 16px 64px 16px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: 48px 24px 72px 24px;
+  }
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* Section Main Heading */
+.mainHeader {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 32px auto;
+}
+
+.mainTitle {
+  font-size: 24px;
+  font-weight: 850;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  margin: 0 0 8px 0;
+}
+
+@media (min-width: 768px) {
+  .mainTitle {
+    font-size: 32px;
+  }
+}
+
+.mainSubtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Mobile Tabs Switcher (Visible only on mobile) */
+.mobileTabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 900px) {
+  .mobileTabs {
+    display: none;
+  }
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tabBtnActive {
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+}
+
+.tabBtnActive.youtubeTab {
+  background: #ff0000 !important;
+}
+
+.tabBtnActive.instaTab {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+}
+
+/* Parallel Columns Layout (Side-by-side on desktop) */
+.columnsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .columnsContainer {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 28px;
+  }
+}
+
+/* Individual Column */
+.column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 20px 16px 24px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 30px -10px rgba(65, 105, 225, 0.08);
+}
+
+@media (min-width: 768px) {
+  .column {
+    padding: 24px 20px 28px 20px;
+    border-radius: 28px;
+  }
+}
+
+/* Column Header */
+.colHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.colHeadingWrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.colBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.youtubeBadge {
+  background: rgba(255, 0, 0, 0.1);
+  color: #e50914;
+}
+
+.instaBadge {
+  background: rgba(225, 48, 108, 0.1);
+  color: #d62976;
+}
+
+.colTitle {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+  margin: 0 0 2px 0;
+}
+
+.colSubtitle {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Navigation Buttons */
+.navBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.navBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.navBtn:hover {
+  background-color: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.navBtn:active {
+  transform: scale(0.92);
+}
+
+/* Slider Track */
+.sliderTrack {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 6px 2px 14px 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.sliderTrack::-webkit-scrollbar {
+  display: none;
+}
+
+/* Video Card (Both YouTube and Instagram) */
+.videoCard {
+  flex: 0 0 220px;
+  width: 220px;
+  height: 390px;
+  scroll-snap-align: start;
+  position: relative;
+  background-color: #0b0f19;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 20px -4px rgba(0, 0, 0, 0.12),
+    0 4px 8px -2px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+@media (min-width: 1024px) {
+  .videoCard {
+    flex: 0 0 240px;
+    width: 240px;
+    height: 426px;
+    border-radius: 20px;
+  }
+}
+
+.videoCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.2);
+}
+
+/* YouTube Thumbnail & Play Overlay */
+.thumbnailContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.thumbnailImage {
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.thumbnailContainer:hover .thumbnailImage {
+  transform: scale(1.05);
+}
+
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.1) 40%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+}
+
+.playButton {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background-color: rgba(255, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(255, 0, 0, 0.4);
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.thumbnailContainer:hover .playButton {
+  transform: scale(1.12);
+  background-color: #ff0000;
+}
+
+.cardBottomInfo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.videoTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 3px 0;
+  line-height: 1.35;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watchPrompt {
+  font-size: 11.5px;
+  color: #ffd2d2;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Iframes */
+.iframeWrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: #000000;
+}
+
+.videoIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Column Footer Link */
+.colFooter {
+  margin-top: 14px;
+  text-align: right;
+  padding-top: 6px;
+}
+
+.viewAllLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.viewAllLink:hover {
+  opacity: 0.85;
+  transform: translateX(2px);
+}

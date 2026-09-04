@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Product } from "@/data/products";
 import styles from "./BrandBanners.module.css";
 
 interface BannerData {
@@ -19,7 +20,49 @@ interface BannerData {
   priceTag?: string;
 }
 
-const BANNERS: BannerData[] = [
+const THEME_CLASSES = [
+  styles.sapphireTheme,
+  styles.emeraldTheme,
+  styles.amberTheme,
+  styles.violetTheme,
+];
+
+function getBrandFromName(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.startsWith("ao smith") || lower.startsWith("a.o. smith")) return "AO Smith";
+  if (lower.startsWith("aquaara")) return "Aquaara";
+  if (lower.startsWith("aquaguard")) return "Aquaguard";
+  if (lower.startsWith("kent")) return "KENT";
+  if (lower.startsWith("purosis")) return "Purosis";
+  if (lower.startsWith("pureit")) return "Pureit";
+  if (lower.startsWith("blueshell")) return "Blueshell";
+  if (lower.startsWith("revito")) return "Revito";
+  if (lower.startsWith("seron")) return "Seron";
+  if (lower.startsWith("aquacare")) return "AquaCare";
+  return name.split(" ")[0] || "AquaCare";
+}
+
+function getBadge(index: number, name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("proplanet") || lower.includes("pro planet")) return "PRO PLANET";
+  if (lower.includes("pro") || lower.includes("max")) return "PRO SERIES";
+  if (lower.includes("alkaline") || lower.includes("alk")) return "ALKALINE+";
+  if (lower.includes("storm") || lower.includes("heavy")) return "HEAVY DUTY";
+  if (lower.includes("copper") || lower.includes("cu")) return "COPPER TECH";
+  const defaults = ["FLAGSHIP", "BESTSELLER", "TOP RATED", "FEATURED"];
+  return defaults[index % defaults.length];
+}
+
+function getCleanSubtitle(product: Product): string {
+  if (product.description && !product.description.toLowerCase().includes("premium quality")) {
+    const clean = product.description.replace(/&amp;/g, "&").replace(/<[^>]*>/g, "").trim();
+    if (clean.length > 0 && clean.length <= 48) return clean;
+    if (clean.length > 48) return clean.slice(0, 45) + "...";
+  }
+  return product.subtitle || "Advanced RO Purification";
+}
+
+const FALLBACK_BANNERS: BannerData[] = [
   {
     id: "banner-1",
     productId: "1",
@@ -29,8 +72,8 @@ const BANNERS: BannerData[] = [
     subtitle: "Advanced RO+UV+UF+Minerals",
     subtext: "7-Stage Intelligent Purification",
     image: "/images/ro-1.jpg",
-    bgClass: styles.tealGradient,
-    priceTag: "₹10,000"
+    bgClass: styles.sapphireTheme,
+    priceTag: "₹10,000",
   },
   {
     id: "banner-2",
@@ -41,8 +84,8 @@ const BANNERS: BannerData[] = [
     subtitle: "With Auto TDS & Mineralizer",
     subtext: "High Recovery Membrane",
     image: "/images/ro-2.jpg",
-    bgClass: styles.blueGradient,
-    priceTag: "₹13,500"
+    bgClass: styles.emeraldTheme,
+    priceTag: "₹13,500",
   },
   {
     id: "banner-3",
@@ -53,15 +96,37 @@ const BANNERS: BannerData[] = [
     subtitle: "Wall Mount Space Saver",
     subtext: "Ideal for Small Kitchens",
     image: "/images/ro-3.jpg",
-    bgClass: styles.darkGradient,
-    priceTag: "₹7,000"
-  }
+    bgClass: styles.amberTheme,
+    priceTag: "₹7,000",
+  },
 ];
 
-export default function BrandBanners() {
+interface BrandBannersProps {
+  initialProducts?: Product[];
+}
+
+export default function BrandBanners({ initialProducts }: BrandBannersProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  const banners: BannerData[] = useMemo(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      return initialProducts.map((product, index) => ({
+        id: `dynamic-${product.id}`,
+        productId: product.id,
+        brand: getBrandFromName(product.name),
+        badge: getBadge(index, product.name),
+        title: product.name,
+        subtitle: getCleanSubtitle(product),
+        subtext: "Pure & Certified Drinking Water",
+        image: product.image || "/images/ro-1.jpg",
+        bgClass: THEME_CLASSES[index % THEME_CLASSES.length],
+        priceTag: product.price,
+      }));
+    }
+    return FALLBACK_BANNERS;
+  }, [initialProducts]);
 
   // Monitor scroll index to update dots
   const handleScroll = () => {
@@ -69,7 +134,7 @@ export default function BrandBanners() {
       const { scrollLeft, clientWidth } = scrollRef.current;
       const slideWidth = window.innerWidth >= 768 ? clientWidth / 2 : clientWidth;
       const index = Math.round(scrollLeft / slideWidth);
-      setActiveIndex(index % BANNERS.length);
+      setActiveIndex(index % banners.length);
     }
   };
 
@@ -88,24 +153,24 @@ export default function BrandBanners() {
   const handleArrowClick = (direction: "left" | "right") => {
     let nextIndex = activeIndex;
     if (direction === "left") {
-      nextIndex = activeIndex === 0 ? BANNERS.length - 1 : activeIndex - 1;
+      nextIndex = activeIndex === 0 ? banners.length - 1 : activeIndex - 1;
     } else {
-      nextIndex = activeIndex === BANNERS.length - 1 ? 0 : activeIndex + 1;
+      nextIndex = activeIndex === banners.length - 1 ? 0 : activeIndex + 1;
     }
     scrollToBanner(nextIndex);
   };
 
   // Infinite auto-scroll logic
   useEffect(() => {
-    if (paused) return;
+    if (paused || banners.length <= 1) return;
 
     const timer = setInterval(() => {
-      const nextIndex = activeIndex === BANNERS.length - 1 ? 0 : activeIndex + 1;
+      const nextIndex = activeIndex === banners.length - 1 ? 0 : activeIndex + 1;
       scrollToBanner(nextIndex);
     }, 4500);
 
     return () => clearInterval(timer);
-  }, [activeIndex, paused]);
+  }, [activeIndex, paused, banners.length]);
 
   return (
     <div className={styles.sectionContainer}>
@@ -116,23 +181,27 @@ export default function BrandBanners() {
         onMouseLeave={() => setPaused(false)}
       >
         {/* Navigation Arrows */}
-        <button 
-          type="button" 
-          className={`${styles.navArrow} ${styles.leftArrow}`} 
-          onClick={() => handleArrowClick("left")}
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={20} />
-        </button>
+        {banners.length > 1 && (
+          <>
+            <button 
+              type="button" 
+              className={`${styles.navArrow} ${styles.leftArrow}`} 
+              onClick={() => handleArrowClick("left")}
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={22} />
+            </button>
 
-        <button 
-          type="button" 
-          className={`${styles.navArrow} ${styles.rightArrow}`} 
-          onClick={() => handleArrowClick("right")}
-          aria-label="Next slide"
-        >
-          <ChevronRight size={20} />
-        </button>
+            <button 
+              type="button" 
+              className={`${styles.navArrow} ${styles.rightArrow}`} 
+              onClick={() => handleArrowClick("right")}
+              aria-label="Next slide"
+            >
+              <ChevronRight size={22} />
+            </button>
+          </>
+        )}
 
         {/* Horizontal Scroll Track */}
         <div 
@@ -140,17 +209,23 @@ export default function BrandBanners() {
           onScroll={handleScroll}
           className={styles.scrollTrack}
         >
-          {BANNERS.map((banner) => (
+          {banners.map((banner) => (
             <Link 
               key={banner.id} 
               href={`/product/${banner.productId}`} 
               className={`${styles.bannerCard} ${banner.bgClass}`}
             >
+              {/* Subtle ambient shimmer */}
+              <div className={styles.shimmerOverlay} />
+
               {/* Left Content Area */}
               <div className={styles.leftContent}>
                 <div className={styles.brandRow}>
                   <span className={styles.brandName}>{banner.brand}</span>
-                  <span className={styles.badge}>{banner.badge}</span>
+                  <span className={styles.badge}>
+                    <span className={styles.sparkleDot} />
+                    {banner.badge}
+                  </span>
                 </div>
                 
                 <h2 className={styles.title}>{banner.title}</h2>
@@ -171,8 +246,8 @@ export default function BrandBanners() {
                   <Image
                     src={banner.image}
                     alt={banner.title}
-                    width={150}
-                    height={165}
+                    width={160}
+                    height={175}
                     className={styles.productImg}
                     priority
                   />
@@ -191,17 +266,19 @@ export default function BrandBanners() {
       </div>
 
       {/* Dots Indicator */}
-      <div className={styles.dotsRow}>
-        {BANNERS.map((_, index) => (
-          <button
-            key={index}
-            type="button"
-            className={`${styles.dot} ${activeIndex === index ? styles.activeDot : ""}`}
-            onClick={() => scrollToBanner(index)}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
+      {banners.length > 1 && (
+        <div className={styles.dotsRow}>
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              className={`${styles.dot} ${activeIndex === index ? styles.activeDot : ""}`}
+              onClick={() => scrollToBanner(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
